@@ -3,4 +3,4 @@ set -euo pipefail
 
 mkdir -p public
 cat .source/part_*.b64 | base64 -d | gzip -dc > public/index.html
-printf '%s  %s\n' 'ec5a39cdcc24356d20d635344637f6fa073cb946c015a1ed88393f179b6a01ef' 'public/index.html' | sha256sum -c -
+printf '%s  %s\n' '9b379496c21a665b285241b14c77cbbc5541f0e1c1e9e6163187d090f7d1c66a' 'public/index.html' | sha256sum -c -
