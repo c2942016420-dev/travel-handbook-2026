@@ -4,7 +4,8 @@
  */
 (()=>{
  'use strict';
- const MODE_KEY=KEY+'__sync_v10_mode',DEVICE_KEY=KEY+'__device_id',
+ const DIRTY_KEY=KEY+'__sync_v10_unsent',
+       MODE_KEY=KEY+'__sync_v10_mode',DEVICE_KEY=KEY+'__device_id',
        VIEW_KEY=KEY+'__sync_v10_view_cache',ORIGINAL_KEY=KEY+'__before_sync_claim';
  const ERRORS={SYNC_UPGRADE_REQUIRED:'Google Drive 接收脚本尚未升级到 V10，请先发布新版本。',
   SYNC_NOT_CONFIGURED:'云备份服务尚未配置。',CONFLICT:'云端账本已更新，当前设备已暂停上传，防止覆盖他人操作。',
@@ -13,7 +14,7 @@
   ALREADY_INITIALIZED:'共享账本已经存在，不能覆盖，请改用只读连接。',
   SYNC_UNAVAILABLE:'暂时无法连接共享服务，请检查网络。',
   BUSY:'云端正在处理另一笔同步，请稍后重试。'};
- let state={mode:'local',revision:0},lastSeen=null,inFlight=false,dirty=false,
+ let state={mode:'local',revision:0},lastSeen=null,inFlight=false,dirty=localStorage.getItem(DIRTY_KEY)==='1',
      changeId=0,pushTimer=null,issue='',checking=false,connected=false,savingRemote=false;
  try{const s=JSON.parse(localStorage.getItem(MODE_KEY)||'null');
   if(s&&['primary','viewer'].includes(s.mode)&&Number.isSafeInteger(s.revision))
@@ -37,7 +38,7 @@
   if(savingRemote)return;
   oldSave();
   if(state.mode==='primary'){
-   dirty=true;changeId++;
+   dirty=true;localStorage.setItem(DIRTY_KEY,'1');changeId++;
    issue='';
    clearTimeout(pushTimer);
    pushTimer=setTimeout(push,1300);
@@ -111,7 +112,7 @@
   try{
    const r=await api('put',{expectedRevision:baseRev,snapshot});
    state.revision=r.revision;localStorage.setItem(MODE_KEY,JSON.stringify(state));
-   dirty=changeId!==thisChange;issue='';
+   dirty=changeId!==thisChange;localStorage.setItem(DIRTY_KEY,dirty?'1':'0');issue='';
   }catch(e){issue=String(e.message||'SYNC_UNAVAILABLE');}
   finally{inFlight=false;draw();if(dirty&&navigator.onLine&&!['CONFLICT','READ_ONLY'].includes(issue))schedulePush();}
  }
@@ -133,7 +134,7 @@
    if(!valid(snapshot))throw Error('INVALID_LEDGER');
    await safeBackup(snapshot);
    const result=await api('init',{snapshot});
-   applyMode('primary',result.revision);dirty=false;connected=true;issue='';lastSeen=null;
+   applyMode('primary',result.revision);dirty=false;localStorage.setItem(DIRTY_KEY,'0');connected=true;issue='';lastSeen=null;
    notify('共享主账本已建立，本设备是主收银设备');
   }catch(e){showIssue(String(e.message));notify(ERRORS[issue]||issue);}
   finally{inFlight=false;render();}
@@ -169,7 +170,7 @@
    try{result=await api('claim',{expectedRevision:r.revision});}
    catch(err){if(saved===null)localStorage.removeItem(KEY);else localStorage.setItem(KEY,saved);throw err;}
    data=clone(r.snapshot);applyMode('primary',result.revision);connected=true;
-   lastSeen=null;dirty=false;issue='';render();
+   lastSeen=null;dirty=false;localStorage.setItem(DIRTY_KEY,'0');issue='';render();
    notify('当前设备已接管主收银；其他设备需刷新才能看到只读状态');
   }catch(e){showIssue(String(e.message));notify(ERRORS[issue]||issue);}
   finally{inFlight=false;draw();}
@@ -251,6 +252,6 @@
    if(valid(cached)){data=clone(cached);connected=true;render();}
   }catch{}
  }
- if(state.mode!=='local')setTimeout(()=>{if(state.mode==='primary'){dirty=false;pull(true);}else pull(true);},2800);
+ if(state.mode!=='local')setTimeout(()=>{if(state.mode==='primary'){pull(true);}else pull(true);},2800);
  render();
 })();
