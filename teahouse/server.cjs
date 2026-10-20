@@ -82,7 +82,15 @@ async function diagnoseBackupLink(){
   const markers={auth:/authorization|authorize|permission|access denied|sign in|login|log in|not verified/i.test(body),
     notFound:/file not found|script function not found|could not find|does not exist|unable to open|can't open|not available/i.test(body),
     googleError:/google apps script|the script completed|we're sorry|sorry|error/i.test(body)};
-  console.log('[backup-check]',JSON.stringify({status:response.status,host,contentType:ct.split(';')[0],kind,title,markers}));
+  const excerpt=body
+    .replace(/<style[\s\S]*?<\/style>/gi,' ')
+    .replace(/<script[\s\S]*?<\/script>/gi,' ')
+    .replace(/<[^>]+>/g,' ')
+    .replace(/&[a-z0-9#]+;/gi,' ')
+    .replace(/https?:\/\/\S+/gi,'[url]')
+    .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g,'[email]')
+    .replace(/\s+/g,' ').trim().slice(0,320);
+  console.log('[backup-check]',JSON.stringify({status:response.status,host,contentType:ct.split(';')[0],kind,title,markers,excerpt}));
  }catch(e){console.log('[backup-check]',JSON.stringify({kind:'NETWORK_ERROR',name:e.name||'Error'}));}
 }
 
