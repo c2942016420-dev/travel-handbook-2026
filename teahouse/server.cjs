@@ -78,7 +78,11 @@ async function diagnoseBackupLink(){
   let kind='NOT_JSON';
   try {const parsed=JSON.parse(body);kind=parsed.service==='YOUDU Drive backup receiver'&&parsed.ok===true?'PUBLIC_JSON_OK':parsed.error||'OTHER_JSON';}
   catch {kind=host.includes('accounts.google.com')||/sign in|signin|log in/i.test(body)?'GOOGLE_LOGIN_REQUIRED':/exception|error occurred/i.test(body)?'GOOGLE_SCRIPT_ERROR_PAGE':ct.includes('text/html')?'HTML_RESPONSE':'UNEXPECTED_RESPONSE';}
-  console.log('[backup-check]',JSON.stringify({status:response.status,host,contentType:ct.split(';')[0],kind}));
+  const title=String((body.match(/<title[^>]*>([^<]*)<\/title>/i)||[])[1]||'').replace(/[^\p{L}\p{N} .,:!?;()_-]/gu,'').slice(0,100);
+  const markers={auth:/authorization|authorize|permission|access denied|sign in|login|log in|not verified/i.test(body),
+    notFound:/file not found|script function not found|could not find|does not exist|unable to open|can't open|not available/i.test(body),
+    googleError:/google apps script|the script completed|we're sorry|sorry|error/i.test(body)};
+  console.log('[backup-check]',JSON.stringify({status:response.status,host,contentType:ct.split(';')[0],kind,title,markers}));
  }catch(e){console.log('[backup-check]',JSON.stringify({kind:'NETWORK_ERROR',name:e.name||'Error'}));}
 }
 
