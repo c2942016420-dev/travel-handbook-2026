@@ -69,6 +69,11 @@
 @media(max-width:970px){.page-title{font-size:27px}.mobile-nav button{font-size:12px}.mobile-nav button span svg{width:21px;height:21px}}
 @media(max-width:640px){.page-desc,.note,.panel-sub{font-size:13.5px}.page-title{font-size:25px}.btn,.textbtn,.chip-group button{font-size:13px}.stat-label{font-size:12px}.stat-number{font-size:26px}.room-name{font-size:21px}.room-button{font-size:13px}.mobile-stock-card .stock-head b{font-size:16px}.mobile-nav button{font-size:11px}.data-table th,.data-table td{font-size:13px}.field input,.field select,.field textarea{font-size:16px}}
 
+
+.yd-v7-backup-status{font-size:14px;font-weight:600;color:#5b745e;padding:12px 14px;background:#eef3eb;border-radius:10px;line-height:1.65}
+.yd-v7-backup-actions{display:flex;gap:11px;flex-wrap:wrap}
+.yd-v7-backup-actions button{font-size:14px}
+@media(max-width:640px){.yd-v7-backup-actions{flex-direction:column}.yd-v7-backup-actions button{width:100%}}
 </style>
 <link rel="manifest" href="./manifest.webmanifest"><meta name="application-name" content="有度茶舍"><meta name="robots" content="noindex,nofollow"><link rel="apple-touch-icon" href="./assets/brand-logo.png">
 </head><body>
@@ -291,6 +296,7 @@ updateUIClock();render();setInterval(liveTick,1000);setInterval(()=>{if(ui.view=
 </script>
 <script src="./enhancements-v6.js"></script>
 <script src="./enhancements-v7.js"></script>
+<script src="./backup-client-v7.js"></script>
 <script>
 (function(){
   const bar=document.getElementById('offlineBar'),label=document.getElementById('offlineLabel');
