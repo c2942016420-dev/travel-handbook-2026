@@ -207,6 +207,11 @@
   }
   const oldExportCSV=exportCSV;
   exportCSV=function(what){
+    if(what==='orders'){
+      const head=[['订单编号','结账时间','楼层','房间','系统应收','实际收款','差额','付款方式','状态','作废原因','原计算应收','最后修改时间','备注'],...data.orders.map(o=>[o.id,fmtDate(o.closedAt),o.floor,o.room,o.due,o.actual,o.difference,o.payment,o.voidedAt?'已作废':'有效',o.voidReason||'',o.originalCalculatedDue??o.due,o.lastEditedAt||'',o.note||''])];
+      exportFile('有度茶舍_营业订单_含作废记录_'+inputDate(Date.now()).slice(0,10)+'.csv',head.map(row=>row.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8');
+      return notify('订单已导出，含作废状态与修改结果');
+    }
     if(what!=='report')return oldExportCSV(what);
     const r=rangeData(),name={day:'日报',week:'周报',month:'月报'}[ui.reportPeriod];
     const head=[
