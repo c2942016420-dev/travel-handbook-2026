@@ -2,6 +2,7 @@
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const ROOT=__dirname,PORT=Number(process.env.PORT||10000),USER=process.env.YOUDU_LOGIN_USER,PASS=process.env.YOUDU_LOGIN_PASSWORD,SECRET=process.env.YOUDU_SESSION_SECRET;
 if(!USER||!PASS||!SECRET||SECRET.length<32){console.error('Missing authentication environment variables');process.exit(1);}
+const receiveSyncV10=require('./sync-api-v10.cjs');
 const PASS_HASH=crypto.createHash('sha256').update(PASS).digest('hex'),DAYS=30*86400000,attempts=new Map();
 const favi=fs.readFileSync(path.join(ROOT,'index.html'),'utf8').match(/<link rel="icon" href="(data:image\/png;base64,[^"]+)"/);
 const ICON=favi?favi[1]:'';
@@ -107,6 +108,7 @@ http.createServer((req,res)=>{
  if(!authed(req)){common(res);res.setHeader('Location','/login');res.setHeader('Cache-Control','no-store');res.writeHead(302);return res.end();}
  if(req.method==='GET'&&p==='/api/backup-status')return replyJSON(res,200,{configured:backupReady(),destination:'Google Drive',note:backupReady()?'仅设备联网且打开本APP时自动上传':'尚未授权，自动备份未运行'});
  if(req.method==='POST'&&p==='/api/backup'){receiveBackup(req,res).catch(()=>replyJSON(res,500,{ok:false,code:'BACKUP_EXCEPTION'}));return;}
+ if(req.method==='POST'&&p==='/api/sync'){receiveSyncV10(req,res,{backupReady,backupUrl:BACKUP_SCRIPT,backupSecret:BACKUP_SECRET,replyJSON}).catch(()=>replyJSON(res,500,{ok:false,code:'SYNC_INTERNAL'}));return;}
  if(req.method==='GET'||req.method==='HEAD')return staticFile(req,res,p);
  return reply(res,405,'Method not allowed','text/plain');
 }).listen(PORT,'0.0.0.0',()=>{console.log('YOUDU protected app listening on '+PORT);diagnoseBackupLink();});
