@@ -22,6 +22,39 @@ function staticFile(req,res,pathname){
  if(!f.startsWith(ROOT+path.sep)||!Object.hasOwn(types,ext))return reply(res,404,'Not found');
  fs.stat(f,(err,st)=>{if(err||!st.isFile())return reply(res,404,'Not found');common(res);res.setHeader('Content-Type',types[ext]);res.setHeader('Cache-Control','private, no-store');res.setHeader('Service-Worker-Allowed','/');res.writeHead(200);const stream=fs.createReadStream(f);stream.on('error',()=>res.destroy());stream.pipe(res);});
 }
+
+/* Optional independent Google Drive authorization via Apps Script.
+   Backups are sent directly to Drive; Render retains no ledger database. */
+const BACKUP_SCRIPT=String(process.env.YOUDU_GOOGLE_BACKUP_URL||'').trim();
+const BACKUP_SECRET=String(process.env.YOUDU_BACKUP_SECRET||'').trim();
+function backupReady(){
+  try{const u=new URL(BACKUP_SCRIPT);return u.protocol==='https:'&&u.hostname==='script.google.com'&&BACKUP_SECRET.length>=48;}
+  catch(e){return false;}
+}
+function replyJSON(res,code,body){return reply(res,code,JSON.stringify(body),'application/json; charset=utf-8');}
+async function receiveBackup(req,res){
+  if(!backupReady())return replyJSON(res,503,{ok:false,code:'NOT_AUTHORIZED',message:'Google Drive 尚未完成独立授权'});
+  if(req.headers.origin&&req.headers.origin!=='https://'+req.headers.host)return replyJSON(res,403,{ok:false,code:'ORIGIN_DENIED'});
+  if(!(req.headers['content-type']||'').startsWith('application/json'))return replyJSON(res,415,{ok:false,code:'JSON_REQUIRED'});
+  let raw='',exceeded=false;
+  for await(const chunk of req){raw+=chunk.toString('utf8');if(raw.length>1800000){exceeded=true;break;}}
+  if(exceeded)return replyJSON(res,413,{ok:false,code:'TOO_LARGE'});
+  let doc;try{doc=JSON.parse(raw);}catch{return replyJSON(res,400,{ok:false,code:'INVALID_JSON'});}
+  const snapshot=doc.snapshot,deviceId=String(doc.deviceId||''),day=String(doc.day||'');
+  if(!/^[a-f0-9-]{16,50}$/i.test(deviceId)||!/^\d{4}-\d{2}-\d{2}$/.test(day)||!snapshot||snapshot.version!==3||!Array.isArray(snapshot.orders)||!Array.isArray(snapshot.inventory)||!Array.isArray(snapshot.movements)||!Array.isArray(snapshot.products)||!snapshot.sessions)return replyJSON(res,422,{ok:false,code:'INVALID_LEDGER'});
+  const savedAt=new Date().toISOString();
+  const body=JSON.stringify({source:'youdu-teahouse',savedAt,day,deviceId,snapshot});
+  const ts=String(Date.now());
+  const signature=crypto.createHmac('sha256',BACKUP_SECRET).update(ts+'.'+body).digest('hex');
+  try{
+    const response=await fetch(BACKUP_SCRIPT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({ts,body,signature}),signal:AbortSignal.timeout(24000)});
+    const responseBody=(await response.text()).slice(0,2048);
+    let result;try{result=JSON.parse(responseBody);}catch{return replyJSON(res,502,{ok:false,code:'DRIVE_UNEXPECTED_RESPONSE'});}
+    if(!response.ok||!result.ok)return replyJSON(res,502,{ok:false,code:'DRIVE_UPLOAD_FAILED'});
+    return replyJSON(res,200,{ok:true,file:result.file||null,savedAt,day,deviceId});
+  }catch(e){return replyJSON(res,502,{ok:false,code:'DRIVE_UNAVAILABLE'});}
+}
+
 http.createServer((req,res)=>{
  const p=new URL(req.url,'http://localhost').pathname;
  if(req.method==='GET'&&p==='/healthz')return reply(res,200,'ok','text/plain');
@@ -32,6 +65,8 @@ http.createServer((req,res)=>{
  }
  if(req.method==='POST'&&p==='/logout')return redirect(res,'/login','yd_session=; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=0');
  if(!authed(req)){common(res);res.setHeader('Location','/login');res.setHeader('Cache-Control','no-store');res.writeHead(302);return res.end();}
+ if(req.method==='GET'&&p==='/api/backup-status')return replyJSON(res,200,{configured:backupReady(),destination:'Google Drive',note:backupReady()?'仅设备联网且打开本APP时自动上传':'尚未授权，自动备份未运行'});
+ if(req.method==='POST'&&p==='/api/backup'){receiveBackup(req,res).catch(()=>replyJSON(res,500,{ok:false,code:'BACKUP_EXCEPTION'}));return;}
  if(req.method==='GET'||req.method==='HEAD')return staticFile(req,res,p);
  return reply(res,405,'Method not allowed','text/plain');
 }).listen(PORT,'0.0.0.0',()=>console.log('YOUDU protected app listening on '+PORT));
