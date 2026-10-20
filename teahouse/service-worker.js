@@ -1,4 +1,4 @@
-const VERSION='youdu-protected-v9-20261020';
+const VERSION='youdu-protected-v9-fix-css-20261020';
 const SHELL=['./enhancements-v6.js','./enhancements-v7.js','./backup-client-v7.js','./corrections-v8.js','./theme-v9.css','./assets/theme-bamboo.svg','./assets/theme-leaf.svg','./index.html','./manifest.webmanifest','./assets/brand-logo.png','./assets/app-icon.svg'];
 const ROOT=self.registration.scope;
 self.addEventListener('install',e=>e.waitUntil((async()=>{const c=await caches.open(VERSION);await c.addAll(SHELL.map(p=>new Request(new URL(p,ROOT),{cache:'reload',credentials:'same-origin'})));await self.skipWaiting()})()));
