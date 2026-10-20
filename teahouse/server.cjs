@@ -95,24 +95,6 @@ async function diagnoseBackupLink(){
 }
 
 
-async function oneTimeDriveWriteDiagnostic(){
- if(!backupReady())return console.log('[backup-write-check] NOT_CONFIGURED');
- const deviceId='00000000-0000-4000-8000-00000000d007',day=new Date().toISOString().slice(0,10);
- const body=JSON.stringify({source:'youdu-teahouse',savedAt:new Date().toISOString(),day,deviceId,
-   snapshot:{version:3,orders:[],inventory:[],movements:[],products:[],sessions:{},testOnly:true}});
- const ts=String(Date.now());
- const signature=crypto.createHmac('sha256',BACKUP_SECRET).update(ts+'.'+body).digest('hex');
- try{
-  const resp=await fetch(BACKUP_SCRIPT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify({ts,body,signature}),signal:AbortSignal.timeout(20000)});
-  const raw=(await resp.text()).slice(0,2400);
-  let obj;try{obj=JSON.parse(raw)}catch{
-    console.log('[backup-write-check]',JSON.stringify({ok:false,http:resp.status,kind:'INVALID_UPSTREAM_RESPONSE'}));return;}
-  console.log('[backup-write-check]',JSON.stringify({ok:!!obj.ok,http:resp.status,
-    result:obj.ok?'GOOGLE_DRIVE_WRITE_CONFIRMED':String(obj.error||'GOOGLE_FAILURE').slice(0,50)}));
- }catch(e){console.log('[backup-write-check]',JSON.stringify({ok:false,kind:e.name||'NETWORK_ERROR'}));}
-}
-
 http.createServer((req,res)=>{
  const p=new URL(req.url,'http://localhost').pathname;
  if(req.method==='GET'&&p==='/healthz')return reply(res,200,'ok','text/plain');
@@ -127,4 +109,4 @@ http.createServer((req,res)=>{
  if(req.method==='POST'&&p==='/api/backup'){receiveBackup(req,res).catch(()=>replyJSON(res,500,{ok:false,code:'BACKUP_EXCEPTION'}));return;}
  if(req.method==='GET'||req.method==='HEAD')return staticFile(req,res,p);
  return reply(res,405,'Method not allowed','text/plain');
-}).listen(PORT,'0.0.0.0',()=>{console.log('YOUDU protected app listening on '+PORT);diagnoseBackupLink();setTimeout(oneTimeDriveWriteDiagnostic,1500);});
+}).listen(PORT,'0.0.0.0',()=>{console.log('YOUDU protected app listening on '+PORT);diagnoseBackupLink();});
