@@ -38,7 +38,7 @@
     const orders=data.orders.filter(o=>active(o)&&between(o.closedAt));
     const adjustments=data.reportAdjustments.filter(a=>!a.voidedAt&&between(a.date));
     const expenses=data.expenses.filter(x=>!x.voidedAt&&between(x.date));
-    const inbound=data.movements.filter(x=>x.type==='inbound'&&between(x.date));
+    const inbound=data.movements.filter(x=>x.type==='inbound'&&!x.voidedAt&&between(x.date));
     const paid=num(orders.reduce((v,o)=>v+(Number(o.actual)||0),0));
     const due=num(orders.reduce((v,o)=>v+(Number(o.due)||0),0));
     const adjustment=num(adjustments.reduce((v,a)=>v+Number(a.amount),0));
