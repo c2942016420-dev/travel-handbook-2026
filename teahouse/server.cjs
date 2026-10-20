@@ -49,10 +49,37 @@ async function receiveBackup(req,res){
   try{
     const response=await fetch(BACKUP_SCRIPT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({ts,body,signature}),signal:AbortSignal.timeout(24000)});
     const responseBody=(await response.text()).slice(0,2048);
-    let result;try{result=JSON.parse(responseBody);}catch{return replyJSON(res,502,{ok:false,code:'DRIVE_UNEXPECTED_RESPONSE'});}
-    if(!response.ok||!result.ok)return replyJSON(res,502,{ok:false,code:'DRIVE_UPLOAD_FAILED'});
+    let result;
+    try{result=JSON.parse(responseBody);}
+    catch{
+      const host=new URL(response.url).hostname,ct=String(response.headers.get('content-type')||'').split(';')[0];
+      const kind=host.includes('accounts.google.com')||/sign in|signin|log in/i.test(responseBody)?'GOOGLE_LOGIN_REQUIRED':/exception|error occurred/i.test(responseBody)?'GOOGLE_SCRIPT_EXCEPTION':ct==='text/html'?'GOOGLE_HTML_RESPONSE':'GOOGLE_INVALID_JSON';
+      console.error('[backup-upload-failed]',JSON.stringify({http:response.status,host,type:ct,kind}));
+      return replyJSON(res,502,{ok:false,code:kind});
+    }
+    if(!response.ok||!result.ok){
+      const error=String(result.error||'UPSTREAM_ERROR').replace(/[^A-Z0-9_]/g,'').slice(0,40);
+      console.error('[backup-upload-failed]',JSON.stringify({http:response.status,code:error}));
+      return replyJSON(res,502,{ok:false,code:'DRIVE_'+error});
+    }
     return replyJSON(res,200,{ok:true,file:result.file||null,savedAt,day,deviceId});
   }catch(e){return replyJSON(res,502,{ok:false,code:'DRIVE_UNAVAILABLE'});}
+}
+
+
+/* Read-only diagnostic: report status/category only, never response body, tokens or secrets. */
+async function diagnoseBackupLink(){
+ if(!backupReady()){console.log('[backup-check] NOT_CONFIGURED');return;}
+ try{
+  const response=await fetch(BACKUP_SCRIPT,{method:'GET',redirect:'follow',signal:AbortSignal.timeout(16000)});
+  const ct=String(response.headers.get('content-type')||'');
+  const host=new URL(response.url).hostname;
+  const body=(await response.text()).slice(0,6000);
+  let kind='NOT_JSON';
+  try {const parsed=JSON.parse(body);kind=parsed.service==='YOUDU Drive backup receiver'&&parsed.ok===true?'PUBLIC_JSON_OK':parsed.error||'OTHER_JSON';}
+  catch {kind=host.includes('accounts.google.com')||/sign in|signin|log in/i.test(body)?'GOOGLE_LOGIN_REQUIRED':/exception|error occurred/i.test(body)?'GOOGLE_SCRIPT_ERROR_PAGE':ct.includes('text/html')?'HTML_RESPONSE':'UNEXPECTED_RESPONSE';}
+  console.log('[backup-check]',JSON.stringify({status:response.status,host,contentType:ct.split(';')[0],kind}));
+ }catch(e){console.log('[backup-check]',JSON.stringify({kind:'NETWORK_ERROR',name:e.name||'Error'}));}
 }
 
 http.createServer((req,res)=>{
@@ -69,4 +96,4 @@ http.createServer((req,res)=>{
  if(req.method==='POST'&&p==='/api/backup'){receiveBackup(req,res).catch(()=>replyJSON(res,500,{ok:false,code:'BACKUP_EXCEPTION'}));return;}
  if(req.method==='GET'||req.method==='HEAD')return staticFile(req,res,p);
  return reply(res,405,'Method not allowed','text/plain');
-}).listen(PORT,'0.0.0.0',()=>console.log('YOUDU protected app listening on '+PORT));
+}).listen(PORT,'0.0.0.0',()=>{console.log('YOUDU protected app listening on '+PORT);diagnoseBackupLink();});
