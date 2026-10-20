@@ -190,7 +190,8 @@
    state.mode==='viewer'?
    '<button type="button" class="btn light" data-yd-sync-btn="refresh">立即刷新</button>'+
    '<button type="button" class="btn" data-yd-sync-btn="claim">接管主收银权限</button>':
-   '<button type="button" class="btn light" data-yd-sync-btn="refresh">立即检查/同步</button>';
+   '<button type="button" class="btn light" data-yd-sync-btn="refresh">立即检查/同步</button>'+ 
+   '<button type="button" class="btn light" data-yd-sync-btn="viewer">转为云端只读（原本机账目保留）</button>';
   return '<section class="panel yd-sync-panel"><h3>多设备共享账本</h3>'+
    '<p id="ydSyncState" class="panel-sub">'+esc(status())+'</p>'+
    '<div class="yd-sync-buttons">'+buttons+'</div>'+
@@ -226,9 +227,10 @@
    else if(name==='connect')connectViewer();
    else if(name==='claim')claim();
    else if(name==='refresh')manual();
+   else if(name==='viewer')connectViewer();
    return;
   }
-  if(state.mode!=='viewer')return;
+  if(state.mode!=='viewer'&&!(state.mode==='primary'&&['CONFLICT','READ_ONLY'].includes(issue)))return;
   const btn=e.target.closest('[data-action]');
   if(!btn)return;
   if(ALLOW_VIEW.has(btn.dataset.action))return;
@@ -236,10 +238,10 @@
   notify('此设备目前只读；请在华为主收银设备操作');
  },true);
  document.addEventListener('submit',e=>{
-  if(state.mode==='viewer'){e.preventDefault();e.stopImmediatePropagation();notify('只读设备不能修改账本');}
+  if(state.mode==='viewer'||(state.mode==='primary'&&['CONFLICT','READ_ONLY'].includes(issue))){e.preventDefault();e.stopImmediatePropagation();notify('当前账本处于只读保护状态，不能提交修改');}
  },true);
  document.addEventListener('change',e=>{
-  if(state.mode==='viewer'&&e.target.matches('input[type=file]')){
+  if((state.mode==='viewer'||['CONFLICT','READ_ONLY'].includes(issue))&&e.target.matches('input[type=file]')){
    e.preventDefault();e.stopImmediatePropagation();notify('只读设备不能导入覆盖账本');
   }
  },true);
