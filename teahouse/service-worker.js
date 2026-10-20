@@ -1,5 +1,5 @@
-const VERSION='youdu-protected-v7b-20261020';
-const SHELL=['./enhancements-v6.js','./enhancements-v7.js','./backup-client-v7.js','./index.html','./manifest.webmanifest','./assets/brand-logo.png','./assets/app-icon.svg'];
+const VERSION='youdu-protected-v8-20261020';
+const SHELL=['./enhancements-v6.js','./enhancements-v7.js','./backup-client-v7.js','./corrections-v8.js','./index.html','./manifest.webmanifest','./assets/brand-logo.png','./assets/app-icon.svg'];
 const ROOT=self.registration.scope;
 self.addEventListener('install',e=>e.waitUntil((async()=>{const c=await caches.open(VERSION);await c.addAll(SHELL.map(p=>new Request(new URL(p,ROOT),{cache:'reload',credentials:'same-origin'})));await self.skipWaiting()})()));
 self.addEventListener('activate',e=>e.waitUntil((async()=>{const keys=await caches.keys();await Promise.all(keys.filter(k=>k.startsWith('youdu-')&&k!==VERSION).map(k=>caches.delete(k)));await self.clients.claim()})()));
