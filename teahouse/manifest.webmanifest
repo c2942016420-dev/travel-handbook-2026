@@ -1,0 +1,26 @@
+{
+  "id": "./",
+  "name": "有度茶舍 · 经营管理",
+  "short_name": "有度茶舍",
+  "description": "有度茶舍二楼茶席、三楼棋牌、进货库存离线经营管理演示",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f8f4",
+  "theme_color": "#234b3a",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "./assets/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/brand-logo.png",
+      "sizes": "258x260",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

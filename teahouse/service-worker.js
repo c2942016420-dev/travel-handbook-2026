@@ -1,0 +1,9 @@
+const VERSION='youdu-protected-v6-20261020';
+const SHELL=['./index.html','./manifest.webmanifest','./assets/brand-logo.png','./assets/app-icon.svg'];
+const ROOT=self.registration.scope;
+self.addEventListener('install',e=>e.waitUntil((async()=>{const c=await caches.open(VERSION);await c.addAll(SHELL.map(p=>new Request(new URL(p,ROOT),{cache:'reload',credentials:'same-origin'})));await self.skipWaiting()})()));
+self.addEventListener('activate',e=>e.waitUntil((async()=>{const keys=await caches.keys();await Promise.all(keys.filter(k=>k.startsWith('youdu-')&&k!==VERSION).map(k=>caches.delete(k)));await self.clients.claim()})()));
+self.addEventListener('fetch',e=>{const q=e.request;if(q.method!=='GET'||new URL(q.url).origin!==self.location.origin||['/login','/logout','/healthz'].includes(new URL(q.url).pathname))return;
+const safe=r=>r.ok&&!r.redirected&&new URL(r.url).pathname!=='/login';
+if(q.mode==='navigate'){e.respondWith((async()=>{try{const r=await fetch(q);if(safe(r)){const c=await caches.open(VERSION);await c.put(q,r.clone())}return r}catch{const c=await caches.open(VERSION);return await c.match(q,{ignoreSearch:true})||await c.match(new URL('./index.html',ROOT))||Response.error()}})());return;}
+e.respondWith((async()=>{const c=await caches.open(VERSION);const hit=await c.match(q,{ignoreSearch:true});if(hit)return hit;try{const r=await fetch(q);if(safe(r))await c.put(q,r.clone());return r}catch{return Response.error()}})())});
