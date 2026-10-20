@@ -198,6 +198,7 @@
    '<p class="panel-sub" style="margin-top:14px">只允许一台设备负责开台与收银。苹果手机可只读查看房态、订单和报表。联网时约25秒刷新一次；断网时主机先本地保存，恢复网络后同步。旧的本机记录不会被自动删除。</p>'+
    '<p class="panel-sub">第一次建立共享账本，请在保存原有正确账目的设备上操作；之后才在华为平板连接并接管主收银权限。</p></section>';
  }
+ window.YouduSharedModeV10=()=>state.mode;
  const prevSettings=settingsPage;
  settingsPage=function(){return prevSettings()+panel();};
  const prevReports=reportsPage;
@@ -245,6 +246,7 @@
    e.preventDefault();e.stopImmediatePropagation();notify('只读设备不能导入覆盖账本');
   }
  },true);
+ document.getElementById('offlineHelp')?.addEventListener('click',e=>{if(state.mode!=='local'){e.preventDefault();e.stopImmediatePropagation();alert('已连接共享账本。当前只有主收银设备可以修改；其他设备只读。断网时主设备保存在本机，联网后检查版本再同步。请在「房间与收费设置」查看共享状态。');}},true);
  window.addEventListener('online',()=>{if(state.mode==='primary'&&dirty)schedulePush();else pull();});
  window.addEventListener('offline',draw);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.mode!=='local')pull();});
