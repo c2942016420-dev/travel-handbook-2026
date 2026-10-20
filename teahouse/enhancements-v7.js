@@ -71,7 +71,7 @@
     return dialogHead('进货库存','删除／作废 · '+s.name,'不是永久删除，会冲回本笔库存变动，并保存原因。')+
     '<form id="v7MovementVoid" class="panel"><div class="summary-line"><span>原记录类型</span><strong>'+nameType(m)+'</strong></div><div class="summary-line"><span>原数量变动</span><strong>'+num(m.delta)+' '+esc(s.unit)+'</strong></div><div class="summary-line"><span>当前库存</span><strong>'+num(s.stock)+' '+esc(s.unit)+'</strong></div>'+
     '<div class="field" style="margin-top:14px"><label>作废原因（必填）</label><textarea name="reason" minlength="2" maxlength="300" required placeholder="例如：重复入库，核对后作废"></textarea></div>'+
-    '<div class="note warning">作废将自动冲回 '+num(m.delta)+' '+esc(s.unit)+' 的变动，原记录仍可查。若当前库存不足以冲回，会出现负库存，需要盘点复核。</div>'+
+    '<div class="note warning">作废将自动冲回 '+num(m.delta)+' '+esc(s.unit)+' 的变动，原记录仍可查。若当前库存不足以冲回，系统会阻止作废，请先核对实际库存。</div>'+
     '<div class="form-actions"><button type="submit" class="btn danger">确认作废并冲回库存</button></div></form>';
   }
   renderDialog=function(){
@@ -85,7 +85,7 @@
   function updateStock(m,difference,kind,reason){
     const st=findStock(m.stockId);if(!st)return false;
     const old=Number(st.stock)||0,next=num(old+difference);
-    if(next<0&&!window.confirm('修正后「'+st.name+'」库存将为 '+next+' '+st.unit+'（负库存）。仍要继续并稍后盘点吗？'))return false;
+    if(next<0){notify('库存数量不足，无法作废或修改这笔记录。请先核对实际库存，再做盘点更正。');return false;}
     st.stock=next;st.initialized=true;
     if(Math.abs(difference)>1e-8){
       data.movements.push({id:rid(),type:kind,date:new Date().toISOString(),stockId:st.id,stockName:st.name,unit:st.unit,delta:num(difference),prevStock:old,nextStock:next,relatedMovementId:m.id,note:reason});
