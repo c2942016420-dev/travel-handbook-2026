@@ -1,6 +1,6 @@
 'use strict';
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
-const MOBILE_VERSION=12,APK_PATH='/downloads/youdu-huawei.apk';
+const MOBILE_VERSION=13,APK_PATH='/downloads/youdu-huawei.apk';
 const ROOT=__dirname,PORT=Number(process.env.PORT||10000),USER=process.env.YOUDU_LOGIN_USER,PASS=process.env.YOUDU_LOGIN_PASSWORD,SECRET=process.env.YOUDU_SESSION_SECRET;
 if(!USER||!PASS||!SECRET||SECRET.length<32){console.error('Missing authentication environment variables');process.exit(1);}
 const receiveSyncV10=require('./sync-api-v10.cjs');
@@ -114,7 +114,7 @@ http.createServer((req,res)=>{
   let available=false;
   try{available=fs.statSync(apkFile).size>30000;}catch{}
   return replyJSON(res,200,{ok:true,androidVersion:MOBILE_VERSION,
-   versionName:'有度茶舍 V12 离线版',
+   versionName:'有度茶舍 V13 离线版',
    apkAvailable:available,downloadUrl:available?APK_PATH:null,
    updateRequiresConfirmation:true,
    note:'APK 安装由 Android 系统确认；更新签名必须一致，旧 V11 是独立测试包'});
