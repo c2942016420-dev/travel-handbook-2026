@@ -1,11 +1,13 @@
-name: Build Youdu Huawei APK
+name: Build Youdu Huawei Offline APK
 on:
   push:
     branches:
       - youdu-teahouse-protected
     paths:
       - 'teahouse/android-app/**'
-      - 'teahouse/assets/brand-logo.png'
+      - 'teahouse/index.html'
+      - 'teahouse/*.js'
+      - 'teahouse/assets/**'
       - '.github/workflows/youdu-huawei-apk.yml'
   workflow_dispatch:
 
@@ -28,20 +30,37 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
-      - name: Use original user-provided logo for launcher icon
+      - name: Bundle all offline UI resources and verify script syntax
+        run: python3 teahouse/android-app/tools/prepare_offline_assets.py
+      - name: Keep the original user-provided logo
         run: |
           mkdir -p teahouse/android-app/app/src/main/res/drawable-nodpi
           cp teahouse/assets/brand-logo.png teahouse/android-app/app/src/main/res/drawable-nodpi/brand_logo.png
           test -s teahouse/android-app/app/src/main/res/drawable-nodpi/brand_logo.png
-      - name: Build Android APK
+      - name: Compile Huawei offline APK
         run: gradle -p teahouse/android-app :app:assembleDebug --no-daemon --stacktrace
-      - name: Validate APK exists
+      - name: Verify APK contains all offline resources
         run: |
-          test -s teahouse/android-app/app/build/outputs/apk/debug/app-debug.apk
-          file teahouse/android-app/app/build/outputs/apk/debug/app-debug.apk
-      - name: Save Huawei installer
+          set -eu
+          apk="teahouse/android-app/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$apk"
+          unzip -Z1 "$apk" > /tmp/youdu-apk-list.txt
+          for path in index.html enhancements-v6.js enhancements-v7.js backup-client-v7.js corrections-v8.js sync-client-v10.js native-offline-v11.js; do
+            grep -Fx "assets/youdu/$path" /tmp/youdu-apk-list.txt
+          done
+          for path in brand-logo.png theme-bamboo.svg theme-leaf.svg app-icon.svg; do
+            grep -Fx "assets/youdu/assets/$path" /tmp/youdu-apk-list.txt
+          done
+          unzip -p "$apk" assets/youdu/index.html | grep -Fq "window.YouduNative?.checkpoint"
+          unzip -p "$apk" assets/youdu/index.html | grep -Fq "const KEY='youdu_tea_house_v3'"
+          if unzip -p "$apk" assets/youdu/index.html | grep -Fq 'serviceWorker.register'; then
+            echo "ERROR: live-only service worker detected" >&2
+            exit 1
+          fi
+          echo "HAWEI_OFFLINE_APK_VALIDATED"
+      - name: Save independent offline installer
         uses: actions/upload-artifact@v4
         with:
-          name: youdu-huawei-apk-test
+          name: youdu-huawei-offline-v11
           path: teahouse/android-app/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
