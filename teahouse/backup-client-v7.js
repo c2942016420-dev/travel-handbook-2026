@@ -17,7 +17,9 @@
     try{return JSON.parse(v||'null');}catch{return null;}
   }
   function draw(){
-    const txt=!navigator.onLine?'当前离线 · 本机继续记账，云备份等待联网':
+    const txt=window.YouduSharedModeV10?.()==='viewer'?
+      'iPhone 云端只读 · 无需单独备份（请看共享账本版本）':
+      !navigator.onLine?'当前离线 · 本机继续记账，云备份等待联网':
       !configured?'Google Drive 尚未独立授权 · 当前仅本机保存':
       uploading?'正在上传本机账目到 Google Drive…':
       lastError?'上次上传未成功：'+lastError:
@@ -41,7 +43,7 @@
     return Array.from(new Uint8Array(x)).map(c=>c.toString(16).padStart(2,'0')).join('');
   }
   async function backup(force=false){
-    if(uploading||!navigator.onLine)return;
+    if(uploading||!navigator.onLine||window.YouduSharedModeV10?.()==='viewer')return;
     if(!onlineChecked)await getStatus();
     if(!configured)return draw();
     const raw=JSON.stringify(data),hash=await digest(raw),prev=stamp(),currentDay=day();
