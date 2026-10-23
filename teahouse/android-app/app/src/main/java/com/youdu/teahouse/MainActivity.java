@@ -70,8 +70,8 @@ public class MainActivity extends Activity {
         m.put("backup-client-v7.js", "application/javascript");
         m.put("corrections-v8.js", "application/javascript");
         m.put("sync-client-v12.js", "application/javascript");
-        m.put("receipt-client-v13.js", "application/javascript");
-        m.put("native-offline-v14.js", "application/javascript");
+        m.put("receipt-client-v14_1.js", "application/javascript");
+        m.put("native-offline-v14_1.js", "application/javascript");
         m.put("theme-v9.css", "text/css");
         m.put("manifest.webmanifest", "application/manifest+json");
         m.put("assets/brand-logo.png", "image/png");
@@ -195,7 +195,7 @@ public class MainActivity extends Activity {
 
     // This bridge is only for the bundled HTML. All third-party content is blocked.
     public final class NativeFileBridge {
-        @JavascriptInterface public String appVersion(){return "14";}
+        @JavascriptInterface public String appVersion(){return "141";}
         @JavascriptInterface public String printerInfo(){
             return thermalPrinter!=null?thermalPrinter.info():"{\"ok\":false}";
         }
