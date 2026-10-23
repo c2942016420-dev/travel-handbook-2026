@@ -1,0 +1,36 @@
+name: Remove Publicly Accessible Old Android Test Signers
+on:
+  push:
+    branches: [youdu-teahouse-protected]
+    paths: ['.github/workflows/youdu-purge-debug-signers.yml']
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Remove old publicly readable signing-key artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t artifact_ids < <(
+            gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" --jq             '.artifacts[] | select(.name | startswith("youdu-fixed-debug-signer-")) | .id'
+          )
+          echo "Found ${#artifact_ids[@]} old test signing-key artifacts"
+          for artifact_id in "${artifact_ids[@]}"; do
+            case "$artifact_id" in
+              ''|*[!0-9]*) echo 'Invalid artifact ID'; exit 1 ;;
+            esac
+            gh api --method DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/$artifact_id" >/dev/null
+            echo "Removed old signing-key artifact"
+          done
+          remaining=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" --jq             '[.artifacts[] | select(.name | startswith("youdu-fixed-debug-signer-"))] | length' | awk '{sum+=$1}END{print sum+0}')
+          test "$remaining" -eq 0
+          echo "OLD_SIGNER_PUBLIC_ARTIFACTS_REMOVED"
