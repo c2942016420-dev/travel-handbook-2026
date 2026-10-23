@@ -39,6 +39,7 @@ jobs:
           node teahouse/tests/v13-regression.test.cjs
           node teahouse/tests/v14-iphone-viewer.test.cjs
           node teahouse/tests/v14-1-checkout.test.cjs
+          node teahouse/tests/v14-2-iphone-report-rights.test.cjs
       - name: Verify separate production package and no keystore in repository
         run: |
           set -eu
