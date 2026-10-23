@@ -150,7 +150,9 @@ async function main(){
    printContext,{filename:'receipt-client-v12.js'});
  assert.match(printContext.roomBill(),/确认结账 · 不打印/);
  assert.match(printContext.roomBill(),/确认结账并打印小票/);
+ printContext.data.orders.push({id:'order1'});
  assert.match(printContext.orderDialog(),/补打小票/);
+ printContext.data.orders.pop();
  function record(wanted,noConfirm=false){
   const form={id:'checkoutForm',dataset:{},noConfirm};
   for(const fn of submitHandlers)fn({target:form,submitter:{getAttribute:()=>wanted?'1':'0'}});
