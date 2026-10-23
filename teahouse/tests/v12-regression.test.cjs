@@ -132,6 +132,7 @@ async function main(){
   document,window:{YouduNative:{printReceipt:html=>nativePrints.push(html)}},
   data:{orders:[]},ui:{modal:{id:'order1'}},
   localStorage:{getItem:()=>null,setItem(){}},
+  settingsPage:()=>'<section/>',
   roomBill:()=>'<div class="form-actions"><button type="submit" class="btn fill">确认收款 · 房间恢复空闲</button></div>',
   orderDialog:()=>'<div class="panel">订单详情</div>',
   checkout(form){
