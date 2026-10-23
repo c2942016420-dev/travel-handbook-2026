@@ -124,7 +124,7 @@ def main():
         subprocess.run(["node","--check",str(js)],check=True)
     inline = re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>", original, re.DOTALL)
     for idx, code in enumerate(inline):
-        temp = OUTPUT / "_test_inline_%d.js" % idx
+        temp = OUTPUT / ("_test_inline_%d.js" % idx)
         try:
             temp.write_text(code, encoding="utf-8")
             subprocess.run(["node","--check",str(temp)],check=True)
