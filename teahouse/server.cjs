@@ -1,5 +1,6 @@
 'use strict';
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
+const MOBILE_VERSION=12,APK_PATH='/downloads/youdu-huawei.apk';
 const ROOT=__dirname,PORT=Number(process.env.PORT||10000),USER=process.env.YOUDU_LOGIN_USER,PASS=process.env.YOUDU_LOGIN_PASSWORD,SECRET=process.env.YOUDU_SESSION_SECRET;
 if(!USER||!PASS||!SECRET||SECRET.length<32){console.error('Missing authentication environment variables');process.exit(1);}
 const receiveSyncV10=require('./sync-api-v10.cjs');
@@ -14,14 +15,16 @@ function common(res){res.setHeader('X-Content-Type-Options','nosniff');res.setHe
 function reply(res,code,data,type='text/html; charset=utf-8'){common(res);res.setHeader('Content-Type',type);res.setHeader('Cache-Control','no-store');res.writeHead(code);res.end(data);}
 function redirect(res,url,cookie){common(res);res.setHeader('Location',url);res.setHeader('Cache-Control','no-store');if(cookie)res.setHeader('Set-Cookie',cookie);res.writeHead(303);res.end();}
 function loginPage(error){return '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>有度茶舍 · 登录</title><style>*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:linear-gradient(140deg,#e9f0e7,#f7f7f3);font-family:-apple-system,BlinkMacSystemFont,PingFang SC,sans-serif;color:#284432;padding:18px}.card{width:min(420px,100%);padding:34px 29px;background:white;border-radius:24px;box-shadow:0 20px 70px #1c332119;text-align:center}.card img{width:78px;height:78px;object-fit:contain}.card h1{font-size:25px;letter-spacing:3px;margin:15px 0 4px;font-weight:650}.sub{color:#8e9b8b;font-size:11px;letter-spacing:2px;margin:8px 0 25px}.msg{color:#728073;font-size:13px;line-height:1.7;margin:0 0 22px}label{text-align:left;display:block;margin:16px 0;color:#5d7564;font-size:12px}input{display:block;border:1px solid #d5e0d6;background:#fff;border-radius:10px;padding:12px;width:100%;font-size:16px;margin-top:7px;min-height:47px;outline-color:#66896d}button{background:#315440;color:white;border:0;border-radius:10px;width:100%;padding:14px;font-size:15px;font-weight:600;margin-top:11px}.hint{font-size:11px;color:#96a096;line-height:1.7;margin:21px 0 0}.error{font-size:12px;color:#a84732;background:#fff0ea;border-radius:8px;padding:12px}</style></head><body><main class="card">'+(ICON?'<img src="'+ICON+'" alt="有度茶舍标志">':'')+'<h1>有度茶舍</h1><p class="sub">YOUDU · TEA HOUSE</p><p class="msg">茶席 · 棋牌 · 进货库存<br>此工作台仅限授权人员使用</p>'+(error?'<p class="error" role="alert">账号或密码不正确</p>':'')+'<form method="POST" action="/login"><label>登录账号<input name="username" autocomplete="username" maxlength="100" required autofocus></label><label>登录密码<input name="password" type="password" autocomplete="current-password" maxlength="256" required></label><button type="submit">登录工作台</button></form><p class="hint">首次登录需联网验证；首次缓存完成后可在本机断网使用。</p></main></body></html>';}
-const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.webmanifest':'application/manifest+json; charset=utf-8','.png':'image/png','.svg':'image/svg+xml','.txt':'text/plain; charset=utf-8'};
+const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.webmanifest':'application/manifest+json; charset=utf-8','.png':'image/png','.svg':'image/svg+xml','.txt':'text/plain; charset=utf-8','.apk':'application/vnd.android.package-archive'};
 function staticFile(req,res,pathname){
  let u;try{u=decodeURIComponent(pathname);}catch{return reply(res,400,'Bad request');}
  if(u==='/')u='/index.html';
  if(u.includes('\\')||u.includes('\0')||u.split('/').includes('..')||u.split('/').slice(1).some(p=>p.startsWith('.')))return reply(res,403,'Forbidden');
  const f=path.resolve(ROOT,'.'+u),ext=path.extname(f).toLowerCase();
  if(!f.startsWith(ROOT+path.sep)||!Object.hasOwn(types,ext))return reply(res,404,'Not found');
- fs.stat(f,(err,st)=>{if(err||!st.isFile())return reply(res,404,'Not found');common(res);res.setHeader('Content-Type',types[ext]);res.setHeader('Cache-Control','private, no-store');res.setHeader('Service-Worker-Allowed','/');res.writeHead(200);const stream=fs.createReadStream(f);stream.on('error',()=>res.destroy());stream.pipe(res);});
+ fs.stat(f,(err,st)=>{if(err||!st.isFile())return reply(res,404,'Not found');common(res);res.setHeader('Content-Type',types[ext]);res.setHeader('Cache-Control','private, no-store');
+  if(ext==='.apk')res.setHeader('Content-Disposition','attachment; filename="Youdu-Teahouse-Huawei.apk"');
+  res.setHeader('Service-Worker-Allowed','/');res.writeHead(200);const stream=fs.createReadStream(f);stream.on('error',()=>res.destroy());stream.pipe(res);});
 }
 
 /* Optional independent Google Drive authorization via Apps Script.
@@ -106,6 +109,16 @@ http.createServer((req,res)=>{
  }
  if(req.method==='POST'&&p==='/logout')return redirect(res,'/login','yd_session=; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=0');
  if(!authed(req)){common(res);res.setHeader('Location','/login');res.setHeader('Cache-Control','no-store');res.writeHead(302);return res.end();}
+ if(req.method==='GET'&&p==='/api/app-version'){
+  const apkFile=path.join(ROOT,'downloads','youdu-huawei.apk');
+  let available=false;
+  try{available=fs.statSync(apkFile).size>30000;}catch{}
+  return replyJSON(res,200,{ok:true,androidVersion:MOBILE_VERSION,
+   versionName:'有度茶舍 V12 离线版',
+   apkAvailable:available,downloadUrl:available?APK_PATH:null,
+   updateRequiresConfirmation:true,
+   note:'APK 安装由 Android 系统确认；更新签名必须一致，旧 V11 是独立测试包'});
+ }
  if(req.method==='GET'&&p==='/api/backup-status')return replyJSON(res,200,{configured:backupReady(),destination:'Google Drive',note:backupReady()?'仅设备联网且打开本APP时自动上传':'尚未授权，自动备份未运行'});
  if(req.method==='POST'&&p==='/api/backup'){receiveBackup(req,res).catch(()=>replyJSON(res,500,{ok:false,code:'BACKUP_EXCEPTION'}));return;}
  if(req.method==='POST'&&p==='/api/sync'){receiveSyncV10(req,res,{backupReady,backupUrl:BACKUP_SCRIPT,backupSecret:BACKUP_SECRET,replyJSON}).catch(()=>replyJSON(res,500,{ok:false,code:'SYNC_INTERNAL'}));return;}
