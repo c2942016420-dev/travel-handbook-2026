@@ -1,26 +1,29 @@
-name: Build Youdu Huawei Offline APK
+name: Build Youdu Huawei Offline V12
 on:
   push:
-    branches:
-      - youdu-teahouse-protected
+    branches: [youdu-teahouse-protected]
     paths:
       - 'teahouse/android-app/**'
       - 'teahouse/index.html'
       - 'teahouse/*.js'
       - 'teahouse/assets/**'
+      - 'teahouse/tests/**'
       - '.github/workflows/youdu-huawei-apk.yml'
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+  actions: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
-      - name: Check out code
+      - name: Check out protected tea-house branch
         uses: actions/checkout@v4
+        with:
+          persist-credentials: true
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -30,22 +33,43 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
-      - name: Bundle all offline UI resources and verify script syntax
+      - name: Regression-test shared ledger and optional printing
+        run: node teahouse/tests/v12-regression.test.cjs
+      - name: Prepare all APK-bundled offline assets
         run: python3 teahouse/android-app/tools/prepare_offline_assets.py
-      - name: Keep the original user-provided logo
+      - name: Keep original user-provided brand LOGO
         run: |
           mkdir -p teahouse/android-app/app/src/main/res/drawable-nodpi
           cp teahouse/assets/brand-logo.png teahouse/android-app/app/src/main/res/drawable-nodpi/brand_logo.png
           test -s teahouse/android-app/app/src/main/res/drawable-nodpi/brand_logo.png
-      - name: Compile Huawei offline APK
+      - name: Restore or initialize reusable V12 testing signer
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          mkdir -p "$HOME/.android"
+          signer="$HOME/.android/debug.keystore"
+          artifact_id=$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" --jq             '.artifacts | map(select((.name | startswith("youdu-fixed-debug-signer-")) and (.expired == false))) | sort_by(.created_at) | last | .id // empty' || true)
+          if [ -n "$artifact_id" ]; then
+            echo "Restoring prior V12 testing signer from an authenticated GitHub Actions artifact"
+            gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/$artifact_id/zip" > /tmp/youdu-signer-artifact.zip
+            unzip -p /tmp/youdu-signer-artifact.zip debug.keystore > "$signer"
+          else
+            echo "Creating first reusable V12 testing signer (not a production signing identity)"
+            keytool -genkeypair -noprompt -keystore "$signer" -storepass android -keypass android               -alias androiddebugkey -keyalg RSA -keysize 3072 -validity 7300               -dname "CN=Youdu Test App, O=Youdu Tea House, C=CN"
+          fi
+          test -s "$signer"
+          chmod 600 "$signer"
+          keytool -list -keystore "$signer" -storepass android -alias androiddebugkey >/dev/null
+      - name: Build fully offline Huawei Android APK
         run: gradle -p teahouse/android-app :app:assembleDebug --no-daemon --stacktrace
-      - name: Verify APK contains all offline resources
+      - name: Verify APK contains bundled offline program and print logic
         run: |
           set -eu
           apk="teahouse/android-app/app/build/outputs/apk/debug/app-debug.apk"
           test -s "$apk"
           unzip -Z1 "$apk" > /tmp/youdu-apk-list.txt
-          for path in index.html enhancements-v6.js enhancements-v7.js backup-client-v7.js corrections-v8.js sync-client-v10.js native-offline-v11.js; do
+          for path in index.html enhancements-v6.js enhancements-v7.js backup-client-v7.js corrections-v8.js sync-client-v12.js receipt-client-v12.js native-offline-v12.js; do
             grep -Fx "assets/youdu/$path" /tmp/youdu-apk-list.txt
           done
           for path in brand-logo.png theme-bamboo.svg theme-leaf.svg app-icon.svg; do
@@ -53,14 +77,37 @@ jobs:
           done
           unzip -p "$apk" assets/youdu/index.html | grep -Fq "window.YouduNative?.checkpoint"
           unzip -p "$apk" assets/youdu/index.html | grep -Fq "const KEY='youdu_tea_house_v3'"
+          unzip -p "$apk" assets/youdu/index.html | grep -Fq 'receipt-client-v12.js'
           if unzip -p "$apk" assets/youdu/index.html | grep -Fq 'serviceWorker.register'; then
-            echo "ERROR: live-only service worker detected" >&2
+            echo "ERROR: web-only service worker detected in native APK" >&2
             exit 1
           fi
-          echo "HAWEI_OFFLINE_APK_VALIDATED"
-      - name: Save independent offline installer
+          echo "HAWEI_V12_OFFLINE_APK_VALIDATED"
+      - name: Preserve V12 test signing identity for compatible later updates
         uses: actions/upload-artifact@v4
         with:
-          name: youdu-huawei-offline-v11
+          name: youdu-fixed-debug-signer-${{ github.run_id }}
+          path: ~/.android/debug.keystore
+          retention-days: 90
+          if-no-files-found: error
+      - name: Downloadable V12 installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: youdu-huawei-offline-v12
           path: teahouse/android-app/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
+      - name: Publish signed APK in protected branch for authenticated downloads
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          mkdir -p teahouse/downloads
+          cp teahouse/android-app/app/build/outputs/apk/debug/app-debug.apk teahouse/downloads/youdu-huawei.apk
+          git config user.name "youdu-release-bot"
+          git config user.email "youdu-release-bot@users.noreply.github.com"
+          git add -f teahouse/downloads/youdu-huawei.apk
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish tested Huawei offline V12 installer [skip ci]"
+            git pull --rebase origin youdu-teahouse-protected
+            git push origin HEAD:youdu-teahouse-protected
+          fi
