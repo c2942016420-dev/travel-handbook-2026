@@ -1,6 +1,8 @@
 'use strict';
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
-const MOBILE_VERSION=13,APK_PATH='/downloads/youdu-huawei.apk';
+const MOBILE_VERSION=14,APK_PATH='/downloads/youdu-official.apk';
+const OFFICIAL_PACKAGE='com.youdu.teahouse.cashier';
+const OFFICIAL_CERT_SHA256='f70780886b7132cd6fec2f17ebc4ab5306a4b5f6193c349e6c1cb2c6b474d854';
 const ROOT=__dirname,PORT=Number(process.env.PORT||10000),USER=process.env.YOUDU_LOGIN_USER,PASS=process.env.YOUDU_LOGIN_PASSWORD,SECRET=process.env.YOUDU_SESSION_SECRET;
 if(!USER||!PASS||!SECRET||SECRET.length<32){console.error('Missing authentication environment variables');process.exit(1);}
 const receiveSyncV10=require('./sync-api-v10.cjs');
@@ -110,14 +112,26 @@ http.createServer((req,res)=>{
  if(req.method==='POST'&&p==='/logout')return redirect(res,'/login','yd_session=; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=0');
  if(!authed(req)){common(res);res.setHeader('Location','/login');res.setHeader('Cache-Control','no-store');res.writeHead(302);return res.end();}
  if(req.method==='GET'&&p==='/api/app-version'){
-  const apkFile=path.join(ROOT,'downloads','youdu-huawei.apk');
+  const apkFile=path.join(ROOT,'downloads','youdu-official.apk');
+  const manifestFile=path.join(ROOT,'downloads','youdu-official.json');
   let available=false;
-  try{available=fs.statSync(apkFile).size>30000;}catch{}
+  try{
+    const meta=JSON.parse(fs.readFileSync(manifestFile,'utf8'));
+    const stat=fs.statSync(apkFile);
+    if(stat.size>60000 && stat.size<15000000 &&
+      meta.androidVersion===MOBILE_VERSION &&
+      meta.packageId===OFFICIAL_PACKAGE &&
+      meta.signerSHA256===OFFICIAL_CERT_SHA256 &&
+      /^[a-f0-9]{64}$/.test(meta.apkSHA256||'')){
+      const realHash=crypto.createHash('sha256').update(fs.readFileSync(apkFile)).digest('hex');
+      available=realHash===meta.apkSHA256;
+    }
+  }catch{}
   return replyJSON(res,200,{ok:true,androidVersion:MOBILE_VERSION,
-   versionName:'有度茶舍 V13 离线版',
+   versionName:'有度茶舍 V14 正式签名版',packageId:OFFICIAL_PACKAGE,
    apkAvailable:available,downloadUrl:available?APK_PATH:null,
    updateRequiresConfirmation:true,
-   note:'APK 安装由 Android 系统确认；更新签名必须一致，旧 V11 是独立测试包'});
+   note:available?'固定包名与签名，Android 确认安装更新':'正式版下载未发布到服务器，请通过已核验的安装包更新'});
  }
  if(req.method==='GET'&&p==='/api/backup-status')return replyJSON(res,200,{configured:backupReady(),destination:'Google Drive',note:backupReady()?'仅设备联网且打开本APP时自动上传':'尚未授权，自动备份未运行'});
  if(req.method==='POST'&&p==='/api/backup'){receiveBackup(req,res).catch(()=>replyJSON(res,500,{ok:false,code:'BACKUP_EXCEPTION'}));return;}
