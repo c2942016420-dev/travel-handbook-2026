@@ -249,7 +249,7 @@
  css.textContent='.yd-sync-panel{margin-top:24px}.yd-sync-buttons{display:flex;gap:9px;flex-wrap:wrap}.yd-sync-panel p{line-height:1.8}.yd-sync-badge{font-size:12px;color:#41694c;white-space:nowrap;background:#edf1e9;border-radius:20px;padding:7px 11px}.yd-sync-panel button{min-height:42px}@media(max-width:640px){.yd-sync-badge{font-size:10px;padding:5px 7px}.yd-sync-buttons button{flex:1 1 100%;font-size:14px}}';
  document.head.appendChild(css);
  const ALLOW_VIEW=new Set(['choose-floor','room-filter','category','stock-tab','stock-category','report-period',
-  'view-order','yd-print-order','open-room','correction-open','correction-switch','correction-history','correction-back',
+  'view-order','yd-print-order','yd-print-test','yd-check-update','yd-download-update','open-room','correction-open','correction-switch','correction-history','correction-back',
   'close-modal','export-json','export-csv','offline-help','stock-filter','close','view-stock','stock-search']);
  document.addEventListener('click',e=>{
   const syncBtn=e.target.closest('[data-yd-sync-btn]');
