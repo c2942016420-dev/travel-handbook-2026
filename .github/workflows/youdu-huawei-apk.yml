@@ -74,8 +74,14 @@ jobs:
           git show HEAD:teahouse/downloads/youdu-huawei.apk > /tmp/youdu-v12.apk
           "$signer" verify --print-certs /tmp/youdu-v12.apk > /tmp/youdu-v12-certs.txt
           "$signer" verify --print-certs teahouse/android-app/app/build/outputs/apk/debug/app-debug.apk > /tmp/youdu-v13-certs.txt
-          grep -F "Signer #1 certificate SHA-256 digest:" /tmp/youdu-v12-certs.txt > /tmp/youdu-v12-digest.txt
-          grep -F "Signer #1 certificate SHA-256 digest:" /tmp/youdu-v13-certs.txt > /tmp/youdu-v13-digest.txt
+          echo "Previous APK signer certificate:"
+          grep -Ei 'Signer .*certificate SHA-256 digest' /tmp/youdu-v12-certs.txt || true
+          echo "New APK signer certificate:"
+          grep -Ei 'Signer .*certificate SHA-256 digest' /tmp/youdu-v13-certs.txt || true
+          sed -nE '/[Ss]igner.*certificate SHA-256 digest/p' /tmp/youdu-v12-certs.txt > /tmp/youdu-v12-digest.txt
+          sed -nE '/[Ss]igner.*certificate SHA-256 digest/p' /tmp/youdu-v13-certs.txt > /tmp/youdu-v13-digest.txt
+          test -s /tmp/youdu-v12-digest.txt
+          test -s /tmp/youdu-v13-digest.txt
           cmp /tmp/youdu-v12-digest.txt /tmp/youdu-v13-digest.txt
           echo "V13_OVERLAY_UPDATE_SIGNER_MATCHES_V12"
       - name: Verify APK contains bundled offline program and print logic
