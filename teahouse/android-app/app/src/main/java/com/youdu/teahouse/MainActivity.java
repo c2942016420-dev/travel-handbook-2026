@@ -39,7 +39,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 有度茶舍 V13 - offline Android POS, ESC/POS USB/Bluetooth/LAN, and signed updates.
+ * 有度茶舍 V14 production identity - bundled offline POS, optional online cloud sync.
  * UI, data, timers and inventory are loaded from APK assets, not from Render.
  * Authenticated /api/ requests only attempt the online service when available.
  * Kept as a distinct applicationId so the previous app's data is not overwritten.
@@ -71,7 +71,7 @@ public class MainActivity extends Activity {
         m.put("corrections-v8.js", "application/javascript");
         m.put("sync-client-v12.js", "application/javascript");
         m.put("receipt-client-v13.js", "application/javascript");
-        m.put("native-offline-v13.js", "application/javascript");
+        m.put("native-offline-v14.js", "application/javascript");
         m.put("theme-v9.css", "text/css");
         m.put("manifest.webmanifest", "application/manifest+json");
         m.put("assets/brand-logo.png", "image/png");
@@ -195,7 +195,7 @@ public class MainActivity extends Activity {
 
     // This bridge is only for the bundled HTML. All third-party content is blocked.
     public final class NativeFileBridge {
-        @JavascriptInterface public String appVersion(){return "13";}
+        @JavascriptInterface public String appVersion(){return "14";}
         @JavascriptInterface public String printerInfo(){
             return thermalPrinter!=null?thermalPrinter.info():"{\"ok\":false}";
         }
