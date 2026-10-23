@@ -12,7 +12,7 @@ import sys
 PROJECT = Path(__file__).resolve().parents[3]
 TEA = PROJECT / "teahouse"
 OUTPUT = TEA / "android-app/app/src/main/assets/youdu"
-EXTRA = TEA / "android-app/tools/native-offline-v13.js"
+EXTRA = TEA / "android-app/tools/native-offline-v14.js"
 
 REQUIRED = [
     "enhancements-v6.js",
@@ -34,6 +34,7 @@ def abort(msg):
 
 def main():
     original = (TEA / "index.html").read_text(encoding="utf-8")
+    original = original.replace("有度茶舍 · 店务管理 V13", "有度茶舍 · 店务管理 正式版 V14")
     if "const KEY='youdu_tea_house_v3'" not in original:
         abort("business data storage key changed unexpectedly")
     if "class=\"brand-logo\"" not in original or "data:image/png;base64," not in original:
@@ -84,13 +85,13 @@ def main():
     pattern = re.compile(
         r"<script>\s*\(function\(\)\{\s*const bar=document\.getElementById\('offlineBar'\)"
         r".*?</script>\s*(?=</body></html>\s*$)", re.DOTALL)
-    original, n = pattern.subn('<script src="./native-offline-v13.js"></script>\n', original)
+    original, n = pattern.subn('<script src="./native-offline-v14.js"></script>\n', original)
     if n != 1:
         abort("PWA service worker footer was not replaced exactly once")
 
     if "serviceWorker.register(" in original:
         abort("unexpected remote dependency in APK")
-    if original.count('<script src="./native-offline-v13.js"></script>') != 1:
+    if original.count('<script src="./native-offline-v14.js"></script>') != 1:
         abort("native offline adapter missing")
     for js in ("enhancements-v6.js","enhancements-v7.js",
                "backup-client-v7.js","corrections-v8.js","sync-client-v12.js","receipt-client-v13.js"):
@@ -108,7 +109,7 @@ def main():
         shutil.copy2(src, dst)
     if not EXTRA.exists():
         abort("offline adapter JS missing")
-    shutil.copy2(EXTRA, OUTPUT / "native-offline-v13.js")
+    shutil.copy2(EXTRA, OUTPUT / "native-offline-v14.js")
 
     external = re.findall(r'<script[^>]+src=["\']([^"\']+)["\']', original)
     external += re.findall(r'<link[^>]+href=["\']([^"\']+)["\']', original)
@@ -132,7 +133,7 @@ def main():
         finally:
             temp.unlink(missing_ok=True)
 
-    print("OFFLINE_V13_BUNDLE_OK")
+    print("OFFLINE_V14_BUNDLE_OK")
     print("Bundled:", ", ".join(sorted(str(p.relative_to(OUTPUT))
         for p in OUTPUT.rglob("*") if p.is_file())))
     print("Original logo preserved; persistent key preserved; network free first launch.")
