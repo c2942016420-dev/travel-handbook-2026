@@ -90,7 +90,7 @@ def main():
 
     if "serviceWorker.register(" in original:
         abort("unexpected remote dependency in APK")
-    if original.count('<script src="./native-offline-v11.js"></script>') != 1:
+    if original.count('<script src="./native-offline-v12.js"></script>') != 1:
         abort("native offline adapter missing")
     for js in ("enhancements-v6.js","enhancements-v7.js",
                "backup-client-v7.js","corrections-v8.js","sync-client-v12.js","receipt-client-v12.js"):
