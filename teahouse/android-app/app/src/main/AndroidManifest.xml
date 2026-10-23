@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <application android:label="有度茶舍" android:icon="@drawable/brand_logo"
+    <application android:label="有度茶舍·离线版" android:icon="@drawable/brand_logo"
         android:allowBackup="false" android:usesCleartextTraffic="false"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <activity android:name=".MainActivity" android:exported="true"
