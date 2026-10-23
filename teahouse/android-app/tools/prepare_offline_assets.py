@@ -38,6 +38,7 @@ def main():
     # the offline Android APK. Android receives its own independent native guard.
     original = original.replace('<script src="./iphone-viewer-v14.js"></script>', '')
 
+    original = original.replace("有度茶舍 · 店务管理 V14（iPhone 云端查看）", "有度茶舍 · 店务管理 正式版 V14")
     original = original.replace("有度茶舍 · 店务管理 V13", "有度茶舍 · 店务管理 正式版 V14")
     if "const KEY='youdu_tea_house_v3'" not in original:
         abort("business data storage key changed unexpectedly")
