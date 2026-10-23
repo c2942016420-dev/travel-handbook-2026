@@ -31,7 +31,7 @@
     return previousSettings()+
      '<section class="panel yd-native-panel"><h3>华为平板离线版 V13</h3>'+
      '<p class="panel-sub">无需网络即可打开本 APP，开台、点单、结账、超时计费与库存都保存在本机。可以在上方导出 JSON 备份，或导入之前的备份文件。</p>'+
-     '<p class="panel-sub">本安装版不会自动读取其他 APP 的账目。请先从旧版导出 JSON，核对后再在这里导入。不要卸载有原始数据的旧 APP。</p>'+
+     '<p class="panel-sub">V13 与 V12 独立安装，不会覆盖旧版账目。请先确认 V12 记录已同步至共享账本；再在 V13 连接已有共享账本并接管主收银。迁移前建议导出完整 JSON 备份。</p>'+
      '<section class="yd-version-panel"><h3>APP 功能更新</h3>'+
      '<p id="ydNativeUpdateStatus" class="panel-sub">'+
      updateStatus.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</p>'+
