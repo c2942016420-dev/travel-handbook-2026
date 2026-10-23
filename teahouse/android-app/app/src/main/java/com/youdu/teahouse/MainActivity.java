@@ -39,7 +39,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 有度茶舍 V12 - bundled offline HTML, native system receipt print and update installer.
+ * 有度茶舍 V13 - offline Android POS, ESC/POS USB/Bluetooth/LAN, and signed updates.
  * UI, data, timers and inventory are loaded from APK assets, not from Render.
  * Authenticated /api/ requests only attempt the online service when available.
  * Kept as a distinct applicationId so the previous app's data is not overwritten.
@@ -58,6 +58,7 @@ public class MainActivity extends Activity {
     private final Object ledgerLock = new Object();
     private AtomicFile snapshotFile;
     private WebView receiptView;
+    private ThermalPrinter thermalPrinter;
     private long currentApkDownloadId=-1;
     private BroadcastReceiver downloadReceiver;
 
@@ -69,8 +70,8 @@ public class MainActivity extends Activity {
         m.put("backup-client-v7.js", "application/javascript");
         m.put("corrections-v8.js", "application/javascript");
         m.put("sync-client-v12.js", "application/javascript");
-        m.put("receipt-client-v12.js", "application/javascript");
-        m.put("native-offline-v12.js", "application/javascript");
+        m.put("receipt-client-v13.js", "application/javascript");
+        m.put("native-offline-v13.js", "application/javascript");
         m.put("theme-v9.css", "text/css");
         m.put("manifest.webmanifest", "application/manifest+json");
         m.put("assets/brand-logo.png", "image/png");
@@ -121,6 +122,7 @@ public class MainActivity extends Activity {
 
         // Only the local bundled app is displayed inside this WebView.
         // Other navigation opens the OS browser; unknown subresources are blocked.
+        thermalPrinter=new ThermalPrinter(this,browser);
         browser.addJavascriptInterface(new NativeFileBridge(), "YouduNative");
         browser.setWebViewClient(new WebViewClient(){
             @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request){
@@ -193,7 +195,34 @@ public class MainActivity extends Activity {
 
     // This bridge is only for the bundled HTML. All third-party content is blocked.
     public final class NativeFileBridge {
-        @JavascriptInterface public String appVersion(){return "12";}
+        @JavascriptInterface public String appVersion(){return "13";}
+        @JavascriptInterface public String printerInfo(){
+            return thermalPrinter!=null?thermalPrinter.info():"{\"ok\":false}";
+        }
+        @JavascriptInterface public String printerSelect(
+            String mode,String id,String host,int port,int paperWidth){
+            return thermalPrinter!=null?thermalPrinter.select(mode,id,host,port,paperWidth):
+                "{\"ok\":false,\"message\":\"打印服务尚未启动\"}";
+        }
+        @JavascriptInterface public String printerUsbPermission(String deviceId){
+            return thermalPrinter!=null?thermalPrinter.requestUsb(deviceId):
+                "{\"ok\":false,\"message\":\"USB 服务未启动\"}";
+        }
+        @JavascriptInterface public String printerBluetoothPermission(){
+            return thermalPrinter!=null?thermalPrinter.requestBluetooth():
+                "{\"ok\":false,\"message\":\"蓝牙服务未启动\"}";
+        }
+        @JavascriptInterface public void printerProbe(){
+            if(thermalPrinter!=null)thermalPrinter.probe();
+        }
+        @JavascriptInterface public void printerTest(){
+            if(thermalPrinter!=null)thermalPrinter.test();
+        }
+        @JavascriptInterface public void printerPrint(
+            String orderJSON,boolean reprint,boolean trial){
+            if(thermalPrinter!=null)thermalPrinter.enqueue(orderJSON,reprint,trial);
+        }
+
 
         @JavascriptInterface public void printReceipt(String markup){
             if(markup==null||markup.length()>200000 || !markup.startsWith("<!doctype html>"))return;
@@ -368,6 +397,7 @@ public class MainActivity extends Activity {
     }
     @Override protected void onDestroy(){
         try{if(downloadReceiver!=null)unregisterReceiver(downloadReceiver);}catch(Exception ignored){}
+        if(thermalPrinter!=null){thermalPrinter.close();thermalPrinter=null;}
         if(receiptView!=null){receiptView.destroy();receiptView=null;}
         if(browser!=null){browser.destroy();browser=null;}
         super.onDestroy();
