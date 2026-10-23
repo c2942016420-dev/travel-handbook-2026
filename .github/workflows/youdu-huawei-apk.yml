@@ -92,7 +92,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: youdu-v14_1-aligned-unsigned
-          path: /tmp/youdu-unsigned/youdu-v14-aligned-unsigned.apk
+          path: /tmp/youdu-unsigned/youdu-v14_1-aligned-unsigned.apk
           retention-days: 30
           if-no-files-found: error
       - name: Save Android apksigner tool (NO PRIVATE KEY)
