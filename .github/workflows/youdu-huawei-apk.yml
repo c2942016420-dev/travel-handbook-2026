@@ -85,7 +85,7 @@ jobs:
           test -s "$apk"
           test -f teahouse/android-app/app/src/main/java/com/youdu/teahouse/ThermalPrinter.java
           unzip -Z1 "$apk" > /tmp/youdu-apk-list.txt
-          for path in index.html enhancements-v6.js enhancements-v7.js backup-client-v7.js corrections-v8.js sync-client-v13.js receipt-client-v13.js native-offline-v13.js; do
+          for path in index.html enhancements-v6.js enhancements-v7.js backup-client-v7.js corrections-v8.js sync-client-v12.js receipt-client-v13.js native-offline-v13.js; do
             grep -Fx "assets/youdu/$path" /tmp/youdu-apk-list.txt
           done
           for path in brand-logo.png theme-bamboo.svg theme-leaf.svg app-icon.svg; do
