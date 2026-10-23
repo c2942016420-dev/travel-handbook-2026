@@ -1,6 +1,14 @@
 package com.youdu.teahouse;
 
 import android.app.Activity;
+import android.app.DownloadManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.IntentFilter;
+import android.database.Cursor;
+import android.os.Environment;
+import android.print.PrintManager;
+import android.print.PrintAttributes;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -31,7 +39,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 有度茶舍 V11 - completely bundled offline app shell.
+ * 有度茶舍 V12 - bundled offline HTML, native system receipt print and update installer.
  * UI, data, timers and inventory are loaded from APK assets, not from Render.
  * Authenticated /api/ requests only attempt the online service when available.
  * Kept as a distinct applicationId so the previous app's data is not overwritten.
@@ -49,6 +57,9 @@ public class MainActivity extends Activity {
     private byte[] pendingExport;
     private final Object ledgerLock = new Object();
     private AtomicFile snapshotFile;
+    private WebView receiptView;
+    private long currentApkDownloadId=-1;
+    private BroadcastReceiver downloadReceiver;
 
     private static Map<String,String> buildMimeMap(){
         Map<String,String> m = new HashMap<>();
@@ -57,8 +68,9 @@ public class MainActivity extends Activity {
         m.put("enhancements-v7.js", "application/javascript");
         m.put("backup-client-v7.js", "application/javascript");
         m.put("corrections-v8.js", "application/javascript");
-        m.put("sync-client-v10.js", "application/javascript");
-        m.put("native-offline-v11.js", "application/javascript");
+        m.put("sync-client-v12.js", "application/javascript");
+        m.put("receipt-client-v12.js", "application/javascript");
+        m.put("native-offline-v12.js", "application/javascript");
         m.put("theme-v9.css", "text/css");
         m.put("manifest.webmanifest", "application/manifest+json");
         m.put("assets/brand-logo.png", "image/png");
@@ -71,6 +83,17 @@ public class MainActivity extends Activity {
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         snapshotFile=new AtomicFile(new File(getFilesDir(),"youdu-ledger-checkpoint.json"));
+        downloadReceiver=new BroadcastReceiver(){
+            @Override public void onReceive(Context c,Intent i){
+                long finished=i.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID,-1);
+                if(finished!=-1 && finished==currentApkDownloadId)
+                    openDownloadedInstaller(finished);
+            }
+        };
+        IntentFilter completed=new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        if(android.os.Build.VERSION.SDK_INT>=33)
+            registerReceiver(downloadReceiver,completed,Context.RECEIVER_NOT_EXPORTED);
+        else registerReceiver(downloadReceiver,completed);
         getWindow().setStatusBarColor(0xfff8f7f1);
         getWindow().setNavigationBarColor(0xfff8f7f1);
         getWindow().getDecorView().setSystemUiVisibility(
@@ -123,7 +146,8 @@ public class MainActivity extends Activity {
                     }
                 }
                 // Online-only endpoints. Offline UI remains usable when they fail.
-                if(rel.startsWith("api/") || rel.equals("login") || rel.equals("logout"))
+                if(rel.startsWith("api/") || rel.startsWith("downloads/") ||
+                   rel.equals("login") || rel.equals("logout"))
                     return null;
                 return forbiddenResponse();
             }
@@ -169,6 +193,67 @@ public class MainActivity extends Activity {
 
     // This bridge is only for the bundled HTML. All third-party content is blocked.
     public final class NativeFileBridge {
+        @JavascriptInterface public String appVersion(){return "12";}
+
+        @JavascriptInterface public void printReceipt(String markup){
+            if(markup==null||markup.length()>200000 || !markup.startsWith("<!doctype html>"))return;
+            new Handler(Looper.getMainLooper()).post(()->{
+                try{
+                    final WebView ticket=new WebView(MainActivity.this);
+                    receiptView=ticket;
+                    ticket.getSettings().setJavaScriptEnabled(true);
+                    ticket.setWebViewClient(new WebViewClient(){
+                        @Override public void onPageFinished(WebView page,String url){
+                            try{
+                                PrintManager mgr=(PrintManager)getSystemService(Context.PRINT_SERVICE);
+                                PrintAttributes attrs=new PrintAttributes.Builder()
+                                    .setColorMode(PrintAttributes.COLOR_MODE_MONOCHROME).build();
+                                mgr.print("有度茶舍结账小票",
+                                  page.createPrintDocumentAdapter("有度茶舍小票"),attrs);
+                            }catch(Exception e){
+                                Toast.makeText(MainActivity.this,
+                                 "未能打开系统打印；请在订单详情重试",Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    });
+                    ticket.loadDataWithBaseURL(HOME,markup,"text/html","UTF-8",null);
+                }catch(Exception e){
+                    Toast.makeText(MainActivity.this,
+                     "打印服务暂不可用，不影响已保存的订单",Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+
+        @JavascriptInterface public void downloadInstaller(String relativePath){
+            if(!"/downloads/youdu-huawei.apk".equals(relativePath))return;
+            new Handler(Looper.getMainLooper()).post(()->{
+                try{
+                    String cookie=CookieManager.getInstance().getCookie(HOME);
+                    if(cookie==null||!cookie.contains("yd_session=")){
+                        Toast.makeText(MainActivity.this,
+                            "请先登录云端再下载新版",Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    DownloadManager manager=(DownloadManager)getSystemService(DOWNLOAD_SERVICE);
+                    DownloadManager.Request request=new DownloadManager.Request(
+                      Uri.parse("https://"+HOST+relativePath));
+                    request.addRequestHeader("Cookie",cookie);
+                    request.setMimeType("application/vnd.android.package-archive");
+                    request.setTitle("有度茶舍 · 离线版更新");
+                    request.setDescription("下载完成后由 Android 系统确认安装");
+                    request.setNotificationVisibility(
+                      DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                    request.setDestinationInExternalFilesDir(MainActivity.this,
+                      Environment.DIRECTORY_DOWNLOADS,"youdu-huawei-update.apk");
+                    currentApkDownloadId=manager.enqueue(request);
+                    Toast.makeText(MainActivity.this,
+                        "已开始下载新版，下载完成后将请求安装",Toast.LENGTH_LONG).show();
+                }catch(Exception e){
+                    Toast.makeText(MainActivity.this,
+                       "下载失败，请使用聊天中的 APK 链接更新",Toast.LENGTH_LONG).show();
+                }
+            });
+        }
         @JavascriptInterface public void checkpoint(String value){
             if(value==null || value.length()>MAX_LEDGER_BYTES)return;
             try{
@@ -230,6 +315,28 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void openDownloadedInstaller(long id){
+        try{
+            DownloadManager mgr=(DownloadManager)getSystemService(DOWNLOAD_SERVICE);
+            try(Cursor c=mgr.query(new DownloadManager.Query().setFilterById(id))){
+                if(c==null || !c.moveToFirst() ||
+                   c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+                    !=DownloadManager.STATUS_SUCCESSFUL){
+                    Toast.makeText(this,"下载未完成；请检查网络或通知栏",Toast.LENGTH_LONG).show();
+                    return;
+                }
+            }
+            Uri downloaded=mgr.getUriForDownloadedFile(id);
+            if(downloaded==null)throw new IOException("Missing downloaded URI");
+            Intent installer=new Intent(Intent.ACTION_VIEW);
+            installer.setDataAndType(downloaded,"application/vnd.android.package-archive");
+            installer.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(installer);
+        }catch(Exception e){
+            Toast.makeText(this,"安装程序未打开，可从下载文件中手动安装",Toast.LENGTH_LONG).show();
+        }
+    }
+
     @Override protected void onActivityResult(int req,int result,Intent incoming){
         super.onActivityResult(req,result,incoming);
         if(req==FILE_CHOOSER && fileCallback!=null){
@@ -260,6 +367,8 @@ public class MainActivity extends Activity {
         else super.onBackPressed();
     }
     @Override protected void onDestroy(){
+        try{if(downloadReceiver!=null)unregisterReceiver(downloadReceiver);}catch(Exception ignored){}
+        if(receiptView!=null){receiptView.destroy();receiptView=null;}
         if(browser!=null){browser.destroy();browser=null;}
         super.onDestroy();
     }
