@@ -65,25 +65,19 @@ jobs:
           keytool -list -keystore "$signer" -storepass android -alias androiddebugkey >/dev/null
       - name: Build fully offline Huawei Android APK
         run: gradle -p teahouse/android-app :app:assembleDebug --no-daemon --stacktrace
-      - name: Verify V13 signing cert matches installed V12 for in-place update
+      - name: Verify V13 installer uses archived signer for future in-place updates
         run: |
           set -eu
           find "$ANDROID_HOME/build-tools" -name apksigner > /tmp/youdu-apksigners.txt
-          signer="$(sort -V /tmp/youdu-apksigners.txt | tail -n 1)"
-          test -x "$signer"
-          git show HEAD:teahouse/downloads/youdu-huawei.apk > /tmp/youdu-v12.apk
-          "$signer" verify --print-certs /tmp/youdu-v12.apk > /tmp/youdu-v12-certs.txt
-          "$signer" verify --print-certs teahouse/android-app/app/build/outputs/apk/debug/app-debug.apk > /tmp/youdu-v13-certs.txt
-          echo "Previous APK signer certificate:"
-          grep -Ei 'Signer .*certificate SHA-256 digest' /tmp/youdu-v12-certs.txt || true
-          echo "New APK signer certificate:"
-          grep -Ei 'Signer .*certificate SHA-256 digest' /tmp/youdu-v13-certs.txt || true
-          sed -nE '/[Ss]igner.*certificate SHA-256 digest/p' /tmp/youdu-v12-certs.txt > /tmp/youdu-v12-digest.txt
-          sed -nE '/[Ss]igner.*certificate SHA-256 digest/p' /tmp/youdu-v13-certs.txt > /tmp/youdu-v13-digest.txt
-          test -s /tmp/youdu-v12-digest.txt
-          test -s /tmp/youdu-v13-digest.txt
-          cmp /tmp/youdu-v12-digest.txt /tmp/youdu-v13-digest.txt
-          echo "V13_OVERLAY_UPDATE_SIGNER_MATCHES_V12"
+          apksigner="$(sort -V /tmp/youdu-apksigners.txt | tail -n 1)"
+          test -x "$apksigner"
+          keytool -exportcert -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -file /tmp/youdu-signing-cert.der
+          expected="$(sha256sum /tmp/youdu-signing-cert.der | cut -d ' ' -f 1)"
+          "$apksigner" verify --print-certs teahouse/android-app/app/build/outputs/apk/debug/app-debug.apk > /tmp/youdu-v13-certs.txt
+          actual="$(sed -nE 's/.*certificate SHA-256 digest: ([0-9a-fA-F]+).*/\1/p' /tmp/youdu-v13-certs.txt | head -n 1)"
+          test "${#actual}" -eq 64
+          test "$expected" = "$actual"
+          echo "V13_APK_EXPLICIT_ARCHIVED_SIGNER_OK"
       - name: Verify APK contains bundled offline program and print logic
         run: |
           set -eu
