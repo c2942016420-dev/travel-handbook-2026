@@ -6,8 +6,8 @@ android {
         applicationId 'com.youdu.teahouse.cashier'
         minSdk 24
         targetSdk 34
-        versionCode 140
-        versionName '1.4.0'
+        versionCode 141
+        versionName '1.4.1'
     }
     // Release APK is intentionally unsigned in public GitHub Actions.
     // The private release PKCS12 key is never sent to the public repo.
