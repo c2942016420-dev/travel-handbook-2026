@@ -119,6 +119,28 @@ async function main(){
   'iPhone local records still not overwritten by cloud refresh');
  console.log('PASS shared ledger: Huawei claim -> save -> CAS upload -> iPhone read-only refresh');
  console.log('PASS original phone ledger preserved; phone cannot write shared records');
+ // V15: an explicitly authorized opening inventory replaces the old trial ledger
+ // on the SAME primary device, and price facts survive the next phone refresh.
+ remote.snapshot.releaseId='youdu-v15-20261023';
+ remote.snapshot.orders=[];
+ remote.snapshot.inventory=[{id:'registered-test',name:'测试库存',unit:'瓶',stock:7,initialized:true,active:true}];
+ remote.revision++;
+ await pad.context.window.YouduSharedSyncV12.refresh();
+ assert.equal(pad.context.data.releaseId,'youdu-v15-20261023');
+ assert.equal(pad.context.data.orders.length,0);
+ assert.equal(pad.context.data.inventory[0].stock,7);
+ assert.equal(pad.context.window.YouduSharedSyncV12.getState().dirty,false);
+ assert.equal(pad.context.window.YouduSharedSyncV12.getState().revision,remote.revision);
+ pad.context.data.orders.push({id:'v15-priced-order',originalDue:58,goodsAdjustment:-28,due:30,actual:29,
+  items:[{name:'测试茶饮',originalPrice:58,price:30,qty:1}]});
+ pad.context.save();await pad.drain();
+ await phone.context.window.YouduSharedSyncV12.refresh();
+ assert.equal(phone.context.data.orders[0].items[0].originalPrice,58);
+ assert.equal(phone.context.data.orders[0].items[0].price,30);
+ assert.equal(phone.context.data.orders[0].actual,29);
+ assert.equal(phone.context.data.inventory[0].stock,7);
+ assert.equal(remote.ownerDevice,'123e4567-e89b-12d3-a456-426614174001');
+ console.log('PASS V15 opening reset keeps the existing primary identity; iPhone receives prices, actuals and inventory');
  // Print functions use a reduced DOM. Confirm both buttons and print only after
  // a successful checkout, never for a canceled checkout.
  const clickHandlers=[],submitHandlers=[],nativePrints=[];

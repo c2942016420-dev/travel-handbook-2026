@@ -7,7 +7,7 @@
  const IS_IPHONE=/iPhone|iPad|iPod/.test(navigator.userAgent)||
   (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
  const IS_NATIVE=!!window.YouduNative;
- let latestCloudTime='',lastContactAt='';
+ let latestCloudTime='',lastContactAt='',releasePrepared=false;
  const DIRTY_KEY=KEY+'__sync_v10_unsent',
        MODE_KEY=KEY+'__sync_v10_mode',DEVICE_KEY=KEY+'__device_id',
        VIEW_KEY=KEY+'__sync_v10_view_cache',ORIGINAL_KEY=KEY+'__before_sync_claim';
@@ -93,12 +93,27 @@
   if(!ui.modal)render();
   else draw();
  }
+ // This one explicitly authorized opening reset is carried by the cloud ledger,
+ // never bundled with customer inventory in public source or the APK.
+ function adoptOpeningRelease(remote){
+  releasePrepared=true;
+  if(!remote.initialized||remote.snapshot?.releaseId!=='youdu-v15-20261023'||data.releaseId===remote.snapshot.releaseId)return false;
+  if(state.mode==='primary'){
+   if(remote.ownerDevice!==deviceId())return false;
+   data=clone(remote.snapshot);oldSave();applyMode('primary',remote.revision);
+   dirty=false;changeId++;localStorage.setItem(DIRTY_KEY,'0');issue='';connected=true;
+   latestCloudTime=remote.updatedAt||'';render();notify('V15 已载入确认库存，试用订单已清空');return true;
+  }
+  if(state.mode==='viewer'){replaceViewer(remote.snapshot,remote.revision);issue='';return true;}
+  return false;
+ }
  async function pull(force=false){
   if(inFlight||!navigator.onLine||!['primary','viewer'].includes(state.mode))return;
-  if(state.mode==='primary'&&dirty){schedulePush();return;}
   inFlight=true;draw();
   try{
    const r=await api('read');
+   if(adoptOpeningRelease(r))return;
+   if(state.mode==='primary'&&dirty){schedulePush();return;}
    if(!r.initialized){showIssue('NOT_INITIALIZED');return;}
    lastSeen=r;latestCloudTime=r.updatedAt||'';
    if(state.mode==='primary'){
@@ -120,8 +135,10 @@
  function schedulePush(){clearTimeout(pushTimer);pushTimer=setTimeout(push,1600);}
  async function push(){
   if(state.mode!=='primary'||!dirty||inFlight||!navigator.onLine||issue==='CONFLICT'||issue==='READ_ONLY')return;
-  inFlight=true;const thisChange=changeId,snapshot=clone(data),baseRev=state.revision;draw();
+  inFlight=true;draw();
   try{
+   if(!releasePrepared){const remote=await api('read');if(adoptOpeningRelease(remote))return;}
+   const thisChange=changeId,snapshot=clone(data),baseRev=state.revision;
    const r=await api('put',{expectedRevision:baseRev,snapshot});
    state.revision=r.revision;localStorage.setItem(MODE_KEY,JSON.stringify(state));
    dirty=changeId!==thisChange;localStorage.setItem(DIRTY_KEY,dirty?'1':'0');issue='';
@@ -248,7 +265,7 @@
  const css=document.createElement('style');
  css.textContent='.yd-sync-panel{margin-top:24px}.yd-sync-buttons{display:flex;gap:9px;flex-wrap:wrap}.yd-sync-panel p{line-height:1.8}.yd-sync-badge{font-size:12px;color:#41694c;white-space:nowrap;background:#edf1e9;border-radius:20px;padding:7px 11px}.yd-sync-panel button{min-height:42px}@media(max-width:640px){.yd-sync-badge{font-size:10px;padding:5px 7px}.yd-sync-buttons button{flex:1 1 100%;font-size:14px}}';
  document.head.appendChild(css);
- const ALLOW_VIEW=new Set(['choose-floor','room-filter','category','stock-tab','stock-category','period','report-period',
+ const ALLOW_VIEW=new Set(['room-tab','picker-category','choose-floor','room-filter','category','stock-tab','stock-category','period','report-period',
   'view-order','yd-print-order','yd-print-test','yd-check-update','yd-download-update','open-room','correction-open','correction-switch','correction-history','correction-back',
   'close-modal','export-json','export-csv','offline-help','stock-filter','close','view-stock','stock-search']);
  document.addEventListener('click',e=>{

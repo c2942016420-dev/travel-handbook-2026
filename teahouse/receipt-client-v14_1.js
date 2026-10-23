@@ -33,8 +33,14 @@
  const htmlText=x=>s(x).replace(/\r?\n/g,'<br>');
  function receipt(order,trial=false,duplicate=false){
   const o=order;
-  const items=(o.items||[]).map(i=>'<div class="line"><span>'+s(i.name)+' '+s(i.label)+
-   ' × '+Number(i.qty||0)+'</span><b>'+amount(Number(i.price||0)*Number(i.qty||0))+'</b></div>').join('');
+  const originalGoods=(o.items||[]).reduce((n,i)=>n+Number(i.originalPrice??i.price??0)*Number(i.qty||0),0);
+  const items=(o.items||[]).map(i=>{
+   const original=Number(i.originalPrice??i.price??0),price=Number(i.price||0),qty=Number(i.qty||0);
+   const detail=Math.abs(original-price)>0.000001?
+    '<div class="line"><span>原单价 '+amount(original)+' → 本单单价 '+amount(price)+'</span></div>'+
+    '<div class="line"><span>本项改价</span><b>'+amount((price-original)*qty)+'</b></div>':'';
+   return '<div class="line"><span>'+s(i.name)+' '+s(i.label)+' × '+qty+(i.temporary?'（临时商品）':'')+'</span><b>'+amount(price*qty)+'</b></div>'+detail;
+  }).join('');
   const date=x=>x?fmtDate(x):new Date().toLocaleString('zh-CN');
   const css='@page{size:'+paper+'mm auto;margin:2mm}'+
     'html,body{margin:0;padding:0;color:#101010;background:#fff;font-family:system-ui,"Noto Sans CJK SC","Microsoft Yahei",sans-serif;font-size:12px}'+
@@ -58,8 +64,11 @@
     (items?items:'<div class="line"><span>无商品加单</span></div>')+
     '<div class="sep"></div>'+
     '<div class="line"><span>商品合计</span><b>'+amount(o.goodsFee)+'</b></div>'+
+    '<div class="line"><span>原价应收</span><b>'+amount(o.originalDue??(Number(o.roomFee||0)+originalGoods))+'</b></div>'+
+    '<div class="line"><span>商品改价调整</span><b>'+amount(o.goodsAdjustment??(Number(o.goodsFee||0)-originalGoods))+'</b></div>'+
     '<div class="line"><span>系统应收</span><b>'+amount(o.due)+'</b></div>'+
     '<div class="line money"><span>实际收款</span><b>'+amount(o.actual)+'</b></div>'+
+    '<div class="line"><span>结账差额</span><b>'+amount(Number(o.actual||0)-Number(o.due||0))+'</b></div>'+
     '<div class="line"><span>支付方式</span><span>'+s(o.payment||'—')+'</span></div>'+
     (o.note?'<div>备注：'+htmlText(o.note)+'</div>':'')+
     '<div class="sep"></div><div class="footer">谢谢光临 · 有度茶舍</div>'+

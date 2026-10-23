@@ -7,7 +7,7 @@
  const isApple=/iPhone|iPad|iPod/.test(navigator.userAgent)||
    (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
  if(!isApple||window.YouduNative)return;
- const SAFE_ACTIONS=new Set(['choose-floor','room-filter','category','stock-tab','stock-category',
+ const SAFE_ACTIONS=new Set(['room-tab','picker-category','choose-floor','room-filter','category','stock-tab','stock-category',
    'period','report-period','view-order','yd-print-order','close-modal','close','open-room','view-stock',
    'stock-search','stock-filter','correction-open','correction-switch',
    'correction-history','correction-back','export-json','export-csv','offline-help']);
@@ -64,16 +64,16 @@
    const s=getState();const status=bar.querySelector('#ydIphoneCloudStatus');
    const connected=s?.mode==='viewer'&&s.connected&&!s.issue;
    const offline=!navigator.onLine;
-   if(!s)status.textContent='iPhone V14.2 · 正在准备云端账本';
+   if(!s)status.textContent='iPhone V15 · 正在准备云端账本';
    else if(connected)
-     status.textContent='iPhone V14.2 · 云端只读 · 第 '+s.revision+' 版 · '+s.orders+
+     status.textContent='iPhone V15 · 云端只读 · 第 '+s.revision+' 版 · '+s.orders+
         ' 笔订单'+(offline?' · 当前离线，只显示上次缓存':' · 自动检查约10秒/次');
    else if(s.mode==='viewer'&&offline)
-     status.textContent='iPhone V14.2 · 当前离线 · 上一次共享快照（非实时数据）';
+     status.textContent='iPhone V15 · 当前离线 · 上一次共享快照（非实时数据）';
    else if(s.issue)
-     status.textContent='iPhone V14.2 · 云端未连接，不能作为营业实时数据 · '+s.issue;
+     status.textContent='iPhone V15 · 云端未连接，不能作为营业实时数据 · '+s.issue;
    else
-     status.textContent='iPhone V14.2 · 尚未确认云端同步 · 本机旧记录不是华为共享账本';
+     status.textContent='iPhone V15 · 尚未确认云端同步 · 本机旧记录不是华为共享账本';
    bar.classList.toggle('yd-needs-login',!connected);
    const btn=bar.querySelector('[data-yd-iphone="connect"]');
    if(btn)btn.hidden=connected;
@@ -98,3 +98,4 @@
  setInterval(draw,1400);
  draw();
 })();
+

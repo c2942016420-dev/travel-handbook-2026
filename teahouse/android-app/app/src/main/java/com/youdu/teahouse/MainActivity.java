@@ -195,7 +195,7 @@ public class MainActivity extends Activity {
 
     // This bridge is only for the bundled HTML. All third-party content is blocked.
     public final class NativeFileBridge {
-        @JavascriptInterface public String appVersion(){return "141";}
+        @JavascriptInterface public String appVersion(){return "150";}
         @JavascriptInterface public String printerInfo(){
             return thermalPrinter!=null?thermalPrinter.info():"{\"ok\":false}";
         }
@@ -319,6 +319,24 @@ public class MainActivity extends Activity {
             }
         }
 
+        @JavascriptInterface public void exportFileBase64(String name,String value,String mime){
+            if(value==null || value.length()>MAX_LEDGER_BYTES*2)return;
+            try{
+                byte[] bytes=android.util.Base64.decode(value,android.util.Base64.DEFAULT);
+                if(bytes.length>MAX_LEDGER_BYTES || bytes.length<4 || bytes[0]!=80 || bytes[1]!=75)return;
+                queueExport(name,bytes,"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            }catch(Exception ignored){}
+        }
+        private void queueExport(String name,byte[] bytes,String finalMime){
+            final String filename=name==null?"有度茶舍_库存.xlsx":name.replaceAll("[/\\\\\\u0000-\\u001f]","_").substring(0,Math.min(name.length(),128));
+            new Handler(Looper.getMainLooper()).post(()->{
+                if(pendingExport!=null){Toast.makeText(MainActivity.this,"请先保存上一份文件",Toast.LENGTH_SHORT).show();return;}
+                pendingExport=bytes;
+                Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);intent.setType(finalMime);intent.putExtra(Intent.EXTRA_TITLE,filename);
+                try{startActivityForResult(intent,EXPORT_DOCUMENT);}catch(Exception e){pendingExport=null;}
+            });
+        }
         @JavascriptInterface public void exportFile(String name,String value,String mime){
             if(value==null || value.length()>MAX_LEDGER_BYTES)return;
             final String filename=name==null?"有度茶舍_备份.json":
@@ -403,3 +421,4 @@ public class MainActivity extends Activity {
         super.onDestroy();
     }
 }
+

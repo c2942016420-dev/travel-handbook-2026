@@ -15,8 +15,8 @@
     const active=data.movements.filter(m=>m.type==='inbound'&&!m.voidedAt&&m.stockId===stockId);
     if(!active.length){st.lastCost=null;st.avgCost=null;return;}
     const quantity=active.reduce((a,m)=>a+Number(m.delta||0),0),cost=active.reduce((a,m)=>a+Number(m.total||0),0);
-    st.avgCost=quantity>0?num(cost/quantity):null;
-    st.lastCost=num(active.sort((a,b)=>+new Date(b.date)-+new Date(a.date))[0].unitCost||0);
+    st.avgCost=quantity>0?Math.round(cost/quantity*1000000)/1000000:null;
+    st.lastCost=Number(active.sort((a,b)=>+new Date(b.date)-+new Date(a.date))[0].unitCost||0);
   }
   function showActions(m){
     if(m.voidedAt)return '<span class="tag warning">已作废（留档）</span>';

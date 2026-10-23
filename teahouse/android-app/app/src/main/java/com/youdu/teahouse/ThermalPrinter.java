@@ -417,12 +417,21 @@ public final class ThermalPrinter {
                 pair(lines,trim(item.optString("name","")+" "+item.optString("label",""),25)+
                     " ×"+item.optInt("qty",1),
                     number(item.optDouble("price",0)*item.optDouble("qty",1)));
+                double original=item.optDouble("originalPrice",item.optDouble("price",0));
+                if(Math.abs(original-item.optDouble("price",0))>0.000001){
+                    append(lines,"原单价 "+number(original)+" → 本单单价 "+number(item.optDouble("price",0)));
+                    pair(lines,"本项改价",number((item.optDouble("price",0)-original)*item.optDouble("qty",1)));
+                }
+                if(item.optBoolean("temporary",false))append(lines,"临时商品");
             }
         }
         append(lines,"--------------------------------");
         pair(lines,"商品合计",number(o.optDouble("goodsFee",0)));
+        pair(lines,"原价应收",number(o.optDouble("originalDue",o.optDouble("due",0))));
+        pair(lines,"商品改价调整",number(o.optDouble("goodsAdjustment",0)));
         pair(lines,"系统应收",number(o.optDouble("due",0)));
         lines.add(new Line("实际收款",number(o.optDouble("actual",0)),false,true));
+        pair(lines,"结账差额",number(o.optDouble("actual",0)-o.optDouble("due",0)));
         pair(lines,"支付方式",trim(o.optString("payment","—"),12));
         if(o.has("note"))append(lines,"备注："+trim(o.optString("note",""),100));
         append(lines,"--------------------------------");
@@ -539,3 +548,4 @@ public final class ThermalPrinter {
         });
     }
 }
+

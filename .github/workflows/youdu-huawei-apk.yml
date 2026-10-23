@@ -1,4 +1,4 @@
-name: Build Youdu V14.1 Checkout Fix Unsigned
+name: Build Youdu V15 Item Prices and Inventory Unsigned
 on:
   push:
     branches: [youdu-teahouse-protected]
@@ -40,11 +40,12 @@ jobs:
           node teahouse/tests/v14-iphone-viewer.test.cjs
           node teahouse/tests/v14-1-checkout.test.cjs
           node teahouse/tests/v14-2-iphone-report-rights.test.cjs
+          node teahouse/tests/v15-pricing-inventory.test.cjs
       - name: Verify separate production package and no keystore in repository
         run: |
           set -eu
           grep -Fq "applicationId 'com.youdu.teahouse.cashier'" teahouse/android-app/app/build.gradle
-          grep -Fq 'versionCode 141' teahouse/android-app/app/build.gradle
+          grep -Fq 'versionCode 150' teahouse/android-app/app/build.gradle
           if grep -Ei 'storePassword|keyPassword|signingConfig' teahouse/android-app/app/build.gradle; then
             echo "ERROR: Release signing code detected in public source" >&2
             exit 1
@@ -72,11 +73,11 @@ jobs:
           test -s "$apksignerjar"
           apk="teahouse/android-app/app/build/outputs/apk/release/app-release-unsigned.apk"
           test -s "$apk"
-          aligned="/tmp/youdu-unsigned/youdu-v14_1-aligned-unsigned.apk"
+          aligned="/tmp/youdu-unsigned/youdu-v15-aligned-unsigned.apk"
           "$sdk_tools" -f -v 4 "$apk" "$aligned"
           "$sdk_tools" -c -v 4 "$aligned"
           unzip -Z1 "$aligned" > /tmp/youdu-unsigned-files.txt
-          for resource in index.html enhancements-v6.js enhancements-v7.js backup-client-v7.js corrections-v8.js sync-client-v12.js receipt-client-v14_1.js native-offline-v14_1.js; do
+          for resource in index.html enhancements-v6.js enhancements-v7.js backup-client-v7.js corrections-v8.js sync-client-v12.js receipt-client-v14_1.js excel-v15.js enhancements-v15.js native-offline-v14_1.js; do
             grep -Fx "assets/youdu/$resource" /tmp/youdu-unsigned-files.txt
           done
           unzip -p "$aligned" assets/youdu/index.html | grep -Fq "const KEY='youdu_tea_house_v3'"
@@ -88,18 +89,19 @@ jobs:
           fi
           cp "$apksignerjar" /tmp/youdu-toolchain/apksigner.jar
           java -jar /tmp/youdu-toolchain/apksigner.jar --help >/dev/null
-          echo 'V14_1_UNSIGNED_OFFLINE_CHECKOUT_FIX_VERIFIED'
+          echo 'V15_UNSIGNED_PRICE_INVENTORY_VERIFIED'
       - name: Save unsigned release (NO PRIVATE KEY)
         uses: actions/upload-artifact@v4
         with:
-          name: youdu-v14_1-aligned-unsigned
-          path: /tmp/youdu-unsigned/youdu-v14_1-aligned-unsigned.apk
+          name: youdu-v15-aligned-unsigned
+          path: /tmp/youdu-unsigned/youdu-v15-aligned-unsigned.apk
           retention-days: 30
           if-no-files-found: error
       - name: Save Android apksigner tool (NO PRIVATE KEY)
         uses: actions/upload-artifact@v4
         with:
-          name: youdu-v14_1-public-signing-tool
+          name: youdu-v15-public-signing-tool
           path: /tmp/youdu-toolchain/apksigner.jar
           retention-days: 30
           if-no-files-found: error
+
