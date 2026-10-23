@@ -384,8 +384,9 @@ public final class ThermalPrinter {
         if(value==null||value.isEmpty())return "—";
         try{
             // Android's Date parser handles the ISO strings emitted by the app.
-            Date d=new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss",Locale.US)
-                .parse(value.length()>=19?value.substring(0,19):value);
+            SimpleDateFormat parser=new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss",Locale.US);
+            parser.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+            Date d=parser.parse(value.length()>=19?value.substring(0,19):value);
             if(d!=null)return new SimpleDateFormat("MM-dd HH:mm",Locale.CHINA).format(d);
         }catch(Exception ignored){}
         return value.length()>19?value.substring(0,19).replace("T"," "):
