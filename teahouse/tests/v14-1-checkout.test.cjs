@@ -18,14 +18,19 @@ let changed=0,saved=0,mayConfirm=true;
 const roomId='2-包一';
 const rates={gamePrice:100,gameHours:4,renewPrice:100,renewHours:4,overHourly:25,
  nightHourly:40,teaSeatFee:0,teaHours:4,teaDayHourly:25,teaNightHourly:40,teaNightStartHour:22};
+const FIXED_NOW=Date.parse('2026-10-23T21:00:00Z');
+class FixedDate extends Date {
+ constructor(...args){super(...(args.length?args:[FIXED_NOW]));}
+ static now(){return FIXED_NOW;}
+}
 const session=(start)=>({id:'order-test-'+Date.now(),roomId,mode:'tea',
- guests:2,startedAt:start||new Date(Date.now()-60*60*1000).toISOString(),renewals:0,
+ guests:2,startedAt:start||new Date(FIXED_NOW-60*60*1000).toISOString(),renewals:0,
  memo:'',rates:{...rates},items:[]});
 const original=session();
 const data={version:3,rooms:[{id:roomId,name:'包一',floor:2,group:'包间'}],
  sessions:{[roomId]:original},orders:[],inventory:[],movements:[],rates:{...rates}};
 const ctx={
- Date,JSON,Number,Math,Map,Set,String,Object,Array,
+ Date:FixedDate,JSON,Number,Math,Map,Set,String,Object,Array,
  data,ui:{modal:{type:'room',id:roomId},view:'rooms'},
  DEFAULT_RATES:rates,
  hrs:ms=>ms>0?Math.ceil(ms/3600000):0,
@@ -110,7 +115,7 @@ assert.equal(receiptOutput.length,2,'Reprinting must send another printer job');
 assert.equal(receiptOutput[1].reprint,true,'Reprint must be explicitly marked');
 assert.equal(data.orders.length,2,'Reprint cannot create another sale');
 console.log('PASS print checkout and marked reprint do not duplicate sales');
-data.sessions[roomId]=session(new Date(Date.now()-6*60*60*1000).toISOString());
+data.sessions[roomId]=session(new Date(FIXED_NOW-6*60*60*1000).toISOString());
 ctx.ui.modal={type:'room',id:roomId};
 data.sessions[roomId].rates.teaDayHourly=null;
 data.rates.teaDayHourly=null;
