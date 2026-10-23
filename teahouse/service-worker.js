@@ -1,4 +1,4 @@
-const VERSION='youdu-protected-v14.1-checkout-hotfix-20261023';
+const VERSION='youdu-protected-v14.2-iphone-report-access-20261023';
 const SHELL=['./enhancements-v6.js','./enhancements-v7.js','./backup-client-v7.js','./corrections-v8.js','./iphone-viewer-v14.js','./sync-client-v12.js','./receipt-client-v14_1.js','./assets/theme-bamboo.svg','./assets/theme-leaf.svg','./index.html','./manifest.webmanifest','./assets/brand-logo.png','./assets/app-icon.svg'];
 const ROOT=self.registration.scope;
 self.addEventListener('install',e=>e.waitUntil((async()=>{const c=await caches.open(VERSION);await c.addAll(SHELL.map(p=>new Request(new URL(p,ROOT),{cache:'reload',credentials:'same-origin'})));await self.skipWaiting()})()));
