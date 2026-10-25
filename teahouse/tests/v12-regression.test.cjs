@@ -150,6 +150,16 @@ async function main(){
  assert(phone.context.data.expenseCategories.includes('交通费'));
  assert.deepEqual(JSON.parse(phone.storage.get('youdu_tea_house_v3')),oldPhone);
  console.log('PASS V16 custom expense categories and costs reach the read-only phone through the existing shared ledger');
+ pad.context.data.products.push({id:'v17-new-menu-product',name:'自查新增商品',category:'其他',active:true,options:[{label:'份',price:12,stockId:'',consume:0}]});
+ pad.context.data.orders.push({id:'v17-amount-order',originalDue:36,goodsAdjustment:-26,due:10,actual:9,items:[{productId:'v17-new-menu-product',name:'自查新增商品',label:'份',originalPrice:12,price:10/3,qty:3,priceEntryMode:'amount'}]});
+ pad.context.save();await pad.drain();await phone.context.window.YouduSharedSyncV12.refresh();
+ assert.equal(phone.context.data.products.at(-1).name,'自查新增商品');
+ assert.equal(phone.context.data.products.at(-1).options[0].price,12);
+ assert.equal(phone.context.data.orders.at(-1).items[0].originalPrice,12);
+ assert.equal(phone.context.data.orders.at(-1).items[0].priceEntryMode,'amount');
+ assert.equal(phone.context.data.orders.at(-1).due,10);assert.equal(phone.context.data.orders.at(-1).actual,9);
+ assert.deepEqual(JSON.parse(phone.storage.get('youdu_tea_house_v3')),oldPhone);
+ console.log('PASS V17 new menu product and order-only amount reach the read-only phone through the same CAS ledger');
 
  // Print functions use a reduced DOM. Confirm both buttons and print only after
  // a successful checkout, never for a canceled checkout.

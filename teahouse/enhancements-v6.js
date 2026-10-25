@@ -269,9 +269,10 @@
     save();closeDialog();render();notify('记录已作废并留痕');
   }
   const oldExportCSV=exportCSV;
+  function orderLineFacts(order){return (order.items||[]).map(x=>x.name+'（'+x.label+'）×'+x.qty+' 原名称:'+(x.originalName??x.name)+' 原单价:'+Number(x.originalPrice??x.price)+' 本单单价:'+x.price+' 本项金额:'+num(x.price*x.qty)+(x.temporary?' [临时商品]':'')).join('；');}
   exportCSV=function(what){
     if(what==='orders'){
-      const head=[['订单编号','结账时间','楼层','房间','系统应收','实际收款','差额','付款方式','状态','作废原因','原计算应收','最后修改时间','备注'],...data.orders.map(o=>[o.id,fmtDate(o.closedAt),o.floor,o.room,o.due,o.actual,o.difference,o.payment,o.voidedAt?'已作废':'有效',o.voidReason||'',o.originalCalculatedDue??o.due,o.lastEditedAt||'',o.note||''])];
+      const head=[['订单编号','结账时间','楼层','房间','系统应收','实际收款','差额','付款方式','状态','作废原因','原计算应收','最后修改时间','备注','原价应收','商品改价调整','商品明细（原名称与本单名称、原价与本单金额）'],...data.orders.map(o=>[o.id,fmtDate(o.closedAt),o.floor,o.room,o.due,o.actual,o.difference,o.payment,o.voidedAt?'已作废':'有效',o.voidReason||'',o.originalCalculatedDue??o.due,o.lastEditedAt||'',o.note||'',o.originalDue??o.due,o.goodsAdjustment??0,orderLineFacts(o)])];
       exportFile('有度茶舍_营业订单_含作废记录_'+inputDate(Date.now()).slice(0,10)+'.csv',head.map(row=>row.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8');
       return notify('订单已导出，含作废状态与修改结果');
     }
@@ -281,8 +282,8 @@
       ['有度茶舍 '+name+'（本机数据，非云同步）'],['报表生成时间',fmtDate(Date.now())],
       ['有效订单数',r.orders.length],['系统应收',r.due],['订单实际收款',r.paid],['人工收入调整',r.adjustment],['调整后营业额',r.revenue],['非进货经营支出',r.operatingCosts],
       ['暂估利润（不含存货成本）',r.profit],['进货总额（另列）',r.procurement],['特别说明','未扣除存货成本、税及其他未记录支出；不是正式净利润'],
-      [],['有效订单'],['订单号','结账时间','楼层','房间','系统应收','实际收款','付款方式','人数','备注'],
-      ...r.orders.map(x=>[x.id,fmtDate(x.closedAt),x.floor,x.room,x.due,x.actual,x.payment,x.guests,x.note||'']),
+      [],['有效订单'],['订单号','结账时间','楼层','房间','系统应收','实际收款','付款方式','人数','备注','原价应收','商品改价调整','商品明细'],
+      ...r.orders.map(x=>[x.id,fmtDate(x.closedAt),x.floor,x.room,x.due,x.actual,x.payment,x.guests,x.note||'',x.originalDue??x.due,x.goodsAdjustment??0,orderLineFacts(x)]),
       [],['人工收入调整'],['时间','金额','调整原因'],...r.adjustments.map(x=>[fmtDate(x.date),x.amount,x.reason]),
       [],['非进货经营支出'],['时间','金额','类别','备注'],...r.expenses.map(x=>[fmtDate(x.date),x.amount,x.category,x.note]),
       [],['进货记录（另列，不计算利润）'],['时间','品种','数量','进货总价','供应商'],...r.inbound.map(x=>[fmtDate(x.date),x.stockName,x.delta,x.total,x.vendor||''])
@@ -334,7 +335,7 @@
   });
   window.YouduExpensesV16={categories:expenseCategories,addCategory:addExpenseCategory,renameCategory:renameExpenseCategory,removeCategory:removeExpenseCategory,
     summary:()=>{const r=rangeData();return {operatingCosts:r.operatingCosts,profit:r.profit,count:r.expenses.length};}};
-  document.title='有度茶舍 · 店务管理 V16';
+  document.title='有度茶舍 · 店务管理 V17';
   const expenseStyle=document.createElement('style');
   expenseStyle.textContent='.yd-v16-category-row{display:flex;gap:8px;align-items:center;margin-bottom:12px}.yd-v16-category-row input{min-width:0;flex:1;min-height:44px;border:1px solid #d5dfcf;border-radius:8px;background:#fffefa;padding:10px;font-size:16px}.yd-v16-category-list{margin-bottom:23px}@media(max-width:600px){.yd-v16-category-row{flex-wrap:wrap}.yd-v16-category-row input{flex-basis:100%}.yd-v16-category-row button{flex:1}}';
   document.head.appendChild(expenseStyle);

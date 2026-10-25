@@ -39,7 +39,9 @@
    const detail=Math.abs(original-price)>0.000001?
     '<div class="line"><span>原单价 '+amount(original)+' → 本单单价 '+amount(price)+'</span></div>'+
     '<div class="line"><span>本项改价</span><b>'+amount((price-original)*qty)+'</b></div>':'';
-   return '<div class="line"><span>'+s(i.name)+' '+s(i.label)+' × '+qty+(i.temporary?'（临时商品）':'')+'</span><b>'+amount(price*qty)+'</b></div>'+detail;
+   return '<div class="line"><span>'+s(i.name)+' '+s(i.label)+' × '+qty+(i.temporary?'（临时商品）':'')+'</span><b>'+amount(price*qty)+'</b></div>'+
+    (i.originalName&&i.originalName!==i.name?'<div class="line"><span>原名称：'+s(i.originalName)+'</span></div>':'')+
+    (i.priceEntryMode==='amount'?'<div class="line"><span>本项金额手动输入，单价按数量折算</span></div>':'')+detail;
   }).join('');
   const date=x=>x?fmtDate(x):new Date().toLocaleString('zh-CN');
   const css='@page{size:'+paper+'mm auto;margin:2mm}'+

@@ -417,6 +417,9 @@ public final class ThermalPrinter {
                 pair(lines,trim(item.optString("name","")+" "+item.optString("label",""),25)+
                     " ×"+item.optInt("qty",1),
                     number(item.optDouble("price",0)*item.optDouble("qty",1)));
+                String originalName=item.optString("originalName",item.optString("name",""));
+                if(!originalName.equals(item.optString("name","")))append(lines,"原名称："+trim(originalName,60));
+                if("amount".equals(item.optString("priceEntryMode","")))append(lines,"本项金额手动输入，单价按数量折算");
                 double original=item.optDouble("originalPrice",item.optDouble("price",0));
                 if(Math.abs(original-item.optDouble("price",0))>0.000001){
                     append(lines,"原单价 "+number(original)+" → 本单单价 "+number(item.optDouble("price",0)));

@@ -195,7 +195,7 @@ public class MainActivity extends Activity {
 
     // This bridge is only for the bundled HTML. All third-party content is blocked.
     public final class NativeFileBridge {
-        @JavascriptInterface public String appVersion(){return "160";}
+        @JavascriptInterface public String appVersion(){return "170";}
         @JavascriptInterface public String printerInfo(){
             return thermalPrinter!=null?thermalPrinter.info():"{\"ok\":false}";
         }

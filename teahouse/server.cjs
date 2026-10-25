@@ -1,6 +1,6 @@
 'use strict';
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
-const MOBILE_VERSION=160,APK_PATH='/downloads/youdu-official.apk';
+const MOBILE_VERSION=170,APK_PATH='/downloads/youdu-official.apk';
 const OFFICIAL_PACKAGE='com.youdu.teahouse.cashier';
 const OFFICIAL_CERT_SHA256='f70780886b7132cd6fec2f17ebc4ab5306a4b5f6193c349e6c1cb2c6b474d854';
 const ROOT=__dirname,PORT=Number(process.env.PORT||10000),USER=process.env.YOUDU_LOGIN_USER,PASS=process.env.YOUDU_LOGIN_PASSWORD,SECRET=process.env.YOUDU_SESSION_SECRET;
@@ -128,7 +128,7 @@ http.createServer((req,res)=>{
     }
   }catch{}
   return replyJSON(res,200,{ok:true,androidVersion:MOBILE_VERSION,
-   versionName:'有度茶舍 V16 正式签名版',packageId:OFFICIAL_PACKAGE,
+   versionName:'有度茶舍 V17 正式签名版',packageId:OFFICIAL_PACKAGE,
    apkAvailable:available,downloadUrl:available?APK_PATH:null,
    updateRequiresConfirmation:true,
    note:available?'固定包名与签名，Android 确认安装更新':'正式版下载未发布到服务器，请通过已核验的安装包更新'});
