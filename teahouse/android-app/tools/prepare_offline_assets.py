@@ -15,14 +15,14 @@ OUTPUT = TEA / "android-app/app/src/main/assets/youdu"
 EXTRA = TEA / "android-app/tools/native-offline-v14_1.js"
 
 REQUIRED = [
-    "enhancements-v6.js",
+    "enhancements-v17-reports.js",
     "enhancements-v7.js",
     "backup-client-v7.js",
     "corrections-v8.js",
     "sync-client-v12.js",
-    "receipt-client-v14_1.js",
+    "receipt-client-v17.js",
     "excel-v15.js",
-    "enhancements-v15.js",
+    "enhancements-v17.js",
     "theme-v9.css",
     "manifest.webmanifest",
     "assets/brand-logo.png",
@@ -38,7 +38,7 @@ def main():
     original = (TEA / "index.html").read_text(encoding="utf-8")
     # The iPhone read-only guard is web-only; it is intentionally not bundled in
     # the offline Android APK. Android receives its own independent native guard.
-    original = original.replace('<script src="./iphone-viewer-v14.js"></script>', '')
+    original = original.replace('<script src="./iphone-viewer-v17.js"></script>', '')
 
     original = original.replace("有度茶舍 · 店务管理 V17（iPhone 云端查看）", "有度茶舍 · 店务管理 正式版 V17")
     original = original.replace("有度茶舍 · 店务管理 V13", "有度茶舍 · 店务管理 正式版 V17")
@@ -100,11 +100,13 @@ def main():
         abort("unexpected remote dependency in APK")
     if original.count('<script src="./native-offline-v14_1.js"></script>') != 1:
         abort("native offline adapter missing")
-    for js in ("enhancements-v6.js","enhancements-v7.js",
-               "backup-client-v7.js","corrections-v8.js","sync-client-v12.js","receipt-client-v14_1.js"):
+    for js in ("enhancements-v17-reports.js","enhancements-v7.js",
+               "backup-client-v7.js","corrections-v8.js","sync-client-v12.js","receipt-client-v17.js"):
         if original.count('<script src="./'+js+'"></script>') != 1:
             abort("missing original functionality: "+js)
 
+    if OUTPUT.exists():
+        shutil.rmtree(OUTPUT)
     OUTPUT.mkdir(parents=True, exist_ok=True)
     (OUTPUT / "index.html").write_text(original, encoding="utf-8")
     for relative in REQUIRED:

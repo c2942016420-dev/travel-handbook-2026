@@ -83,7 +83,7 @@ jobs:
           "$sdk_tools" -f -v 4 "$apk" "$aligned"
           "$sdk_tools" -c -v 4 "$aligned"
           unzip -Z1 "$aligned" > /tmp/youdu-unsigned-files.txt
-          for resource in index.html enhancements-v6.js enhancements-v7.js backup-client-v7.js corrections-v8.js sync-client-v12.js receipt-client-v14_1.js excel-v15.js enhancements-v15.js native-offline-v14_1.js; do
+          for resource in index.html enhancements-v17-reports.js enhancements-v7.js backup-client-v7.js corrections-v8.js sync-client-v12.js receipt-client-v17.js excel-v15.js enhancements-v17.js native-offline-v14_1.js; do
             grep -Fx "assets/youdu/$resource" /tmp/youdu-unsigned-files.txt
           done
           unzip -p "$aligned" assets/youdu/index.html | grep -Fq "const KEY='youdu_tea_house_v3'"
