@@ -1,4 +1,4 @@
-name: Build Youdu V17 Order Amounts and Menu Additions Unsigned
+name: Build Youdu V18 Android Resource Routing Fix Unsigned
 on:
   push:
     branches: [youdu-teahouse-protected]
@@ -51,7 +51,7 @@ jobs:
         run: |
           set -eu
           grep -Fq "applicationId 'com.youdu.teahouse.cashier'" teahouse/android-app/app/build.gradle
-          grep -Fq 'versionCode 170' teahouse/android-app/app/build.gradle
+          grep -Fq 'versionCode 180' teahouse/android-app/app/build.gradle
           if grep -Ei 'storePassword|keyPassword|signingConfig' teahouse/android-app/app/build.gradle; then
             echo "ERROR: Release signing code detected in public source" >&2
             exit 1
@@ -79,9 +79,10 @@ jobs:
           test -s "$apksignerjar"
           apk="teahouse/android-app/app/build/outputs/apk/release/app-release-unsigned.apk"
           test -s "$apk"
-          aligned="/tmp/youdu-unsigned/youdu-v17-aligned-unsigned.apk"
+          aligned="/tmp/youdu-unsigned/youdu-v18-aligned-unsigned.apk"
           "$sdk_tools" -f -v 4 "$apk" "$aligned"
           "$sdk_tools" -c -v 4 "$aligned"
+          python3 teahouse/android-app/tools/verify_apk_routes.py "$aligned"
           unzip -Z1 "$aligned" > /tmp/youdu-unsigned-files.txt
           for resource in index.html enhancements-v17-reports.js enhancements-v7.js backup-client-v7.js corrections-v8.js sync-client-v12.js receipt-client-v17.js excel-v15.js enhancements-v17.js native-offline-v14_1.js; do
             grep -Fx "assets/youdu/$resource" /tmp/youdu-unsigned-files.txt
@@ -95,18 +96,18 @@ jobs:
           fi
           cp "$apksignerjar" /tmp/youdu-toolchain/apksigner.jar
           java -jar /tmp/youdu-toolchain/apksigner.jar --help >/dev/null
-          echo 'V17_UNSIGNED_ORDER_AMOUNTS_MENU_VERIFIED'
+          echo 'V18_NATIVE_ROUTES_AND_UI_VERIFIED'
       - name: Save unsigned release (NO PRIVATE KEY)
         uses: actions/upload-artifact@v4
         with:
-          name: youdu-v17-aligned-unsigned
-          path: /tmp/youdu-unsigned/youdu-v17-aligned-unsigned.apk
+          name: youdu-v18-aligned-unsigned
+          path: /tmp/youdu-unsigned/youdu-v18-aligned-unsigned.apk
           retention-days: 30
           if-no-files-found: error
       - name: Save Android apksigner tool (NO PRIVATE KEY)
         uses: actions/upload-artifact@v4
         with:
-          name: youdu-v17-public-signing-tool
+          name: youdu-v18-public-signing-tool
           path: /tmp/youdu-toolchain/apksigner.jar
           retention-days: 30
           if-no-files-found: error

@@ -40,8 +40,8 @@ def main():
     # the offline Android APK. Android receives its own independent native guard.
     original = original.replace('<script src="./iphone-viewer-v17.js"></script>', '')
 
-    original = original.replace("有度茶舍 · 店务管理 V17（iPhone 云端查看）", "有度茶舍 · 店务管理 正式版 V17")
-    original = original.replace("有度茶舍 · 店务管理 V13", "有度茶舍 · 店务管理 正式版 V17")
+    original = original.replace("有度茶舍 · 店务管理 V17（iPhone 云端查看）", "有度茶舍 · 店务管理 正式版 V18")
+    original = original.replace("有度茶舍 · 店务管理 V13", "有度茶舍 · 店务管理 正式版 V18")
     if "const KEY='youdu_tea_house_v3'" not in original:
         abort("business data storage key changed unexpectedly")
     if "class=\"brand-logo\"" not in original or "data:image/png;base64," not in original:
@@ -120,6 +120,19 @@ def main():
         abort("offline adapter JS missing")
     shutil.copy2(EXTRA, OUTPUT / "native-offline-v14_1.js")
 
+    # Files in the ZIP must also be reachable through Android's explicit router.
+    # Merely bundling a script is insufficient: an unknown path is returned as 403.
+    activity = (TEA / "android-app/app/src/main/java/com/youdu/teahouse/MainActivity.java").read_text(encoding="utf-8")
+    routes = dict(re.findall(r'm\.put\("([^\"]+)",\s*"([^\"]+)"\)', activity))
+    bundled = {str(p.relative_to(OUTPUT)) for p in OUTPUT.rglob("*") if p.is_file()}
+    if bundled != set(routes):
+        abort("Android local routes differ from bundled files; blocked=" +
+              ",".join(sorted(bundled - set(routes))) + "; missing=" +
+              ",".join(sorted(set(routes) - bundled)))
+    for relative in bundled:
+        if relative.endswith(".js") and routes[relative] != "application/javascript":
+            abort("Android JavaScript MIME is incorrect: " + relative)
+
     external = re.findall(r'<script[^>]+src=["\']([^"\']+)["\']', original)
     external += re.findall(r'<link[^>]+href=["\']([^"\']+)["\']', original)
     for url in external:
@@ -142,7 +155,7 @@ def main():
         finally:
             temp.unlink(missing_ok=True)
 
-    print("OFFLINE_V17_BUNDLE_OK")
+    print("OFFLINE_V18_BUNDLE_OK")
     print("Bundled:", ", ".join(sorted(str(p.relative_to(OUTPUT))
         for p in OUTPUT.rglob("*") if p.is_file())))
     print("Original logo preserved; persistent key preserved; network free first launch.")

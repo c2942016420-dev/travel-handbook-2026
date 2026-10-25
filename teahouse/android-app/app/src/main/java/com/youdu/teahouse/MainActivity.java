@@ -65,12 +65,14 @@ public class MainActivity extends Activity {
     private static Map<String,String> buildMimeMap(){
         Map<String,String> m = new HashMap<>();
         m.put("index.html", "text/html");
-        m.put("enhancements-v6.js", "application/javascript");
+        m.put("enhancements-v17-reports.js", "application/javascript");
         m.put("enhancements-v7.js", "application/javascript");
         m.put("backup-client-v7.js", "application/javascript");
         m.put("corrections-v8.js", "application/javascript");
         m.put("sync-client-v12.js", "application/javascript");
-        m.put("receipt-client-v14_1.js", "application/javascript");
+        m.put("receipt-client-v17.js", "application/javascript");
+        m.put("excel-v15.js", "application/javascript");
+        m.put("enhancements-v17.js", "application/javascript");
         m.put("native-offline-v14_1.js", "application/javascript");
         m.put("theme-v9.css", "text/css");
         m.put("manifest.webmanifest", "application/manifest+json");
@@ -195,7 +197,7 @@ public class MainActivity extends Activity {
 
     // This bridge is only for the bundled HTML. All third-party content is blocked.
     public final class NativeFileBridge {
-        @JavascriptInterface public String appVersion(){return "170";}
+        @JavascriptInterface public String appVersion(){return "180";}
         @JavascriptInterface public String printerInfo(){
             return thermalPrinter!=null?thermalPrinter.info():"{\"ok\":false}";
         }

@@ -1,4 +1,4 @@
-/* 有度茶舍 V17 安卓离线壳：只修改安装版行为，不修改网页版。
+/* 有度茶舍 V18 安卓离线壳：只修改安装版行为，不修改网页版。
  * 资产文件来自 APK，自动数据检查点在本机，联网可选择云端授权。
  */
 (function(){
@@ -40,6 +40,9 @@
   },true);
   let updateStatus='尚未检查新版',updateDownloadUrl='',updatePending=false;
   if(!native){label.textContent='本机离线资源未准备好';return;}
+  document.title='有度茶舍 · 店务管理 V18 安卓版';
+  const buildLabel=document.querySelector('.top-state');
+  if(buildLabel)buildLabel.textContent='V18 · 离线收银';
 
   function drawOffline(){
     const online=navigator.onLine;
@@ -63,9 +66,9 @@
   const previousSettings=settingsPage;
   settingsPage=function(){
     return previousSettings()+
-     '<section class="panel yd-native-panel"><h3>华为平板离线版 V17</h3>'+
+     '<section class="panel yd-native-panel"><h3>华为平板离线版 V18</h3>'+
      '<p class="panel-sub">无需网络即可打开本 APP，开台、点单、结账、超时计费与库存都保存在本机。可以在上方导出 JSON 备份，或导入之前的备份文件。</p>'+
-     '<p class="panel-sub">正式版 V17 与早期测试版 V11/V12/V13 独立安装，不会覆盖旧版账目。请先确认旧版记录已同步至共享账本；再在 V17 连接已有共享账本并接管主收银。迁移前建议导出完整 JSON 备份。</p>'+
+     '<p class="panel-sub">正式版 V18 与早期测试版 V11/V12/V13 独立安装，不会覆盖旧版账目。请先确认旧版记录已同步至共享账本；再在 V18 连接已有共享账本并接管主收银。迁移前建议导出完整 JSON 备份。</p>'+
      '<section class="yd-version-panel"><h3>APP 功能更新</h3>'+
      '<p id="ydNativeUpdateStatus" class="panel-sub">'+
      updateStatus.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</p>'+

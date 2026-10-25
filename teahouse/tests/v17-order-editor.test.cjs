@@ -3,6 +3,8 @@ process.env.TZ='Asia/Shanghai';
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {JSDOM}=require(process.env.YOUDU_TEST_JS_MODULES?path.join(process.env.YOUDU_TEST_JS_MODULES,'jsdom'):'jsdom');
 const ROOT=path.resolve(__dirname,'..'),KEY='youdu_tea_house_v3';
+const nativeSource=fs.readFileSync(path.join(ROOT,'android-app/app/src/main/java/com/youdu/teahouse/MainActivity.java'),'utf8');
+const nativeResources=new Map([...nativeSource.matchAll(/m\.put\("([^\"]+)",\s*"([^\"]+)"\)/g)].map(m=>[m[1],m[2]]));
 const clone=x=>JSON.parse(JSON.stringify(x));
 const rates={teaSeatFee:0,teaHours:4,teaDayHourly:25,teaNightHourly:40,teaNightStartHour:22};
 const fixture={version:3,rooms:[{id:'2-test',name:'测试茶席',floor:2,group:'测试'}],sessions:{},orders:[],
@@ -21,7 +23,7 @@ function app({snapshot=fixture,native=true,mode='primary',iphone=false}={}){
  w.scrollTo=()=>{};w.CSS={escape:x=>String(x)};w.setTimeout=()=>0;w.setInterval=()=>0;w.clearInterval=()=>{};w.alert=()=>{};
  w.confirm=message=>{confirmations.push(message);return true;};
  w.fetch=()=>{throw Error('A UI regression test must never contact a real ledger');};
- if(native)w.YouduNative={checkpoint(){},recoverCheckpoint:()=>'',appVersion:()=> '170',
+ if(native)w.YouduNative={checkpoint(){},recoverCheckpoint:()=>'',appVersion:()=> '180',
   printerInfo:()=>JSON.stringify({ok:true,mode:'usb',width:58,device:'test',usb:[],bluetooth:[]}),
   printReceipt:markup=>prints.push({markup}),printerPrint:(json,reprint,trial)=>prints.push({order:JSON.parse(json),reprint,trial}),
   exportFile:(name,content,type)=>exports.push({name,content,type})};
@@ -30,7 +32,7 @@ function app({snapshot=fixture,native=true,mode='primary',iphone=false}={}){
  const sources=[];
  for(const script of w.document.querySelectorAll('script')){
   const src=script.getAttribute('src');
-  if(src){if(native&&src.includes('iphone-viewer'))continue;sources.push(fs.readFileSync(path.join(ROOT,src),'utf8'));}
+  if(src){if(native&&src.includes('iphone-viewer'))continue;if(native)assert.equal(nativeResources.get(src.replace(/^\.\//,'')),'application/javascript','Android would return 403 for '+src);sources.push(fs.readFileSync(path.join(ROOT,src),'utf8'));}
   else if(!script.textContent.includes('navigator.serviceWorker.register'))sources.push(script.textContent);
  }
  if(native)sources.push(fs.readFileSync(path.join(ROOT,'android-app/tools/native-offline-v14_1.js'),'utf8'));
@@ -43,6 +45,8 @@ function app({snapshot=fixture,native=true,mode='primary',iphone=false}={}){
  return {dom,w,$,click,edit,submit,ledger,confirmations,prints,exports,errors};
 }
 const a=app();
+assert.match(a.w.document.title,/V18 安卓版/);
+assert.match(a.$('.top-state').textContent,/V18/);
 a.click('[data-action="open-room"]');
 a.edit('#startForm [name="memo"]','自查脚本测试，非真实营业');a.submit('#startForm');
 a.click('[data-action="add-to-cart"][data-id="g1"][data-idx="0"]');
