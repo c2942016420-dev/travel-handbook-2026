@@ -533,6 +533,7 @@ document.addEventListener('submit',e=>{const form=e.target;if(!['startForm','che
 });
 document.addEventListener('input',e=>{const t=e.target;if(t.name==='startedAt'&&t.closest('#startForm'))ui.startTimeEdited=true;if(t.id==='searchProducts'){ui.search=t.value;const i=t.selectionStart;render();const input=$('searchProducts');if(input){input.focus();input.setSelectionRange(i,i);}}else if(t.id==='searchStock'){ui.stockSearch=t.value;const i=t.selectionStart;render();const input=$('searchStock');if(input){input.focus();input.setSelectionRange(i,i);}}else if(t.id==='pickerSearch'){ui.pickerSearch=t.value;const i=t.selectionStart;renderDialog();const input=$('pickerSearch');if(input){input.focus();input.setSelectionRange(i,i);}}else if(t.id==='purchaseQty'||t.id==='purchaseCost'){const qty=Number($('purchaseQty')?.value||0),cost=Number($('purchaseCost')?.value||0),total=$('purchaseTotal');if(total)total.textContent=money(qty*cost);}});
 $('importData').addEventListener('change',e=>{if(e.target.files&&e.target.files[0])restoreFile(e.target.files[0]);e.target.value='';});
+document.addEventListener('focusout',e=>{if(e.target?.matches?.('[data-v15-price],[data-v17-amount]')&&e.target.dataset.ydPending==='1')window.YouduV15?.flushEdits();},true);
 $('overlay').addEventListener('click',e=>{if(e.target.classList.contains('shade'))closeDialog();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.modal)closeDialog();});
 function liveTick(){updateUIClock();window.YouduV15?.liveTotals();if(ui.view==='rooms'){
