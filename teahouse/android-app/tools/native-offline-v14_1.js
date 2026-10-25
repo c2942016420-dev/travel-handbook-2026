@@ -1,4 +1,4 @@
-/* 有度茶舍 V15 安卓离线壳：只修改安装版行为，不修改网页版。
+/* 有度茶舍 V16 安卓离线壳：只修改安装版行为，不修改网页版。
  * 资产文件来自 APK，自动数据检查点在本机，联网可选择云端授权。
  */
 (function(){
@@ -10,11 +10,13 @@
   const MUTATING_ACTIONS=new Set([
     'add-to-cart','qty','toggle-product','renew','save-memo',
     'delete-room','import-json','restore-json','correction-save',
-    'correction-submit','expense-save','new-session','close-session'
+    'correction-submit','expense-save','new-session','close-session',
+    'expense-new','expense-edit','expense-categories','expense-category-rename','expense-category-delete','entry-void'
   ]);
   const MUTATING_FORMS=new Set([
     'startForm','checkoutForm','productForm','stockForm',
-    'purchaseForm','adjustForm','roomEditForm','rateForm','ydV15TemporaryForm'
+    'purchaseForm','adjustForm','roomEditForm','rateForm','ydV15TemporaryForm',
+    'v6ExpenseForm','v6EntryVoidForm','v16ExpenseCategoryForm'
   ]);
   function primaryReady(){return window.YouduSharedModeV10?.()==='primary';}
   function notInitializedYet(){
@@ -61,9 +63,9 @@
   const previousSettings=settingsPage;
   settingsPage=function(){
     return previousSettings()+
-     '<section class="panel yd-native-panel"><h3>华为平板离线版 V15</h3>'+
+     '<section class="panel yd-native-panel"><h3>华为平板离线版 V16</h3>'+
      '<p class="panel-sub">无需网络即可打开本 APP，开台、点单、结账、超时计费与库存都保存在本机。可以在上方导出 JSON 备份，或导入之前的备份文件。</p>'+
-     '<p class="panel-sub">正式版 V15 与早期测试版 V11/V12/V13 独立安装，不会覆盖旧版账目。请先确认旧版记录已同步至共享账本；再在 V15 连接已有共享账本并接管主收银。迁移前建议导出完整 JSON 备份。</p>'+
+     '<p class="panel-sub">正式版 V16 与早期测试版 V11/V12/V13 独立安装，不会覆盖旧版账目。请先确认旧版记录已同步至共享账本；再在 V16 连接已有共享账本并接管主收银。迁移前建议导出完整 JSON 备份。</p>'+
      '<section class="yd-version-panel"><h3>APP 功能更新</h3>'+
      '<p id="ydNativeUpdateStatus" class="panel-sub">'+
      updateStatus.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</p>'+
@@ -158,3 +160,4 @@
   drawOffline();
   render();
 })();
+

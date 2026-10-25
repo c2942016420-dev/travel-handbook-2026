@@ -141,6 +141,16 @@ async function main(){
  assert.equal(phone.context.data.inventory[0].stock,7);
  assert.equal(remote.ownerDevice,'123e4567-e89b-12d3-a456-426614174001');
  console.log('PASS V15 opening reset keeps the existing primary identity; iPhone receives prices, actuals and inventory');
+ pad.context.data.expenseCategories=['买菜','水电','维修','交通费'];
+ pad.context.data.expenses=[{id:'expense-v16-test',date:new Date().toISOString(),amount:20,category:'交通费',note:''}];
+ pad.context.save();await pad.drain();
+ await phone.context.window.YouduSharedSyncV12.refresh();
+ assert.equal(phone.context.data.expenses[0].amount,20);
+ assert.equal(phone.context.data.expenses[0].category,'交通费');
+ assert(phone.context.data.expenseCategories.includes('交通费'));
+ assert.deepEqual(JSON.parse(phone.storage.get('youdu_tea_house_v3')),oldPhone);
+ console.log('PASS V16 custom expense categories and costs reach the read-only phone through the existing shared ledger');
+
  // Print functions use a reduced DOM. Confirm both buttons and print only after
  // a successful checkout, never for a canceled checkout.
  const clickHandlers=[],submitHandlers=[],nativePrints=[];
@@ -189,3 +199,4 @@ async function main(){
  console.log('V12_LOGIC_REGRESSION_SUCCESS');
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});
+

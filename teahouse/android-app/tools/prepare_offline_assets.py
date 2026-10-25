@@ -40,8 +40,8 @@ def main():
     # the offline Android APK. Android receives its own independent native guard.
     original = original.replace('<script src="./iphone-viewer-v14.js"></script>', '')
 
-    original = original.replace("有度茶舍 · 店务管理 V15（iPhone 云端查看）", "有度茶舍 · 店务管理 正式版 V15")
-    original = original.replace("有度茶舍 · 店务管理 V13", "有度茶舍 · 店务管理 正式版 V15")
+    original = original.replace("有度茶舍 · 店务管理 V15（iPhone 云端查看）", "有度茶舍 · 店务管理 正式版 V16")
+    original = original.replace("有度茶舍 · 店务管理 V13", "有度茶舍 · 店务管理 正式版 V16")
     if "const KEY='youdu_tea_house_v3'" not in original:
         abort("business data storage key changed unexpectedly")
     if "class=\"brand-logo\"" not in original or "data:image/png;base64," not in original:
@@ -140,11 +140,12 @@ def main():
         finally:
             temp.unlink(missing_ok=True)
 
-    print("OFFLINE_V15_BUNDLE_OK")
+    print("OFFLINE_V16_BUNDLE_OK")
     print("Bundled:", ", ".join(sorted(str(p.relative_to(OUTPUT))
         for p in OUTPUT.rglob("*") if p.is_file())))
     print("Original logo preserved; persistent key preserved; network free first launch.")
 
 if __name__=="__main__":
     main()
+
 

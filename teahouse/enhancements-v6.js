@@ -73,14 +73,14 @@
   reportsPage=function(){
     const r=rangeData(),period={day:'今日',week:'本周',month:'本月'}[ui.reportPeriod];
     const titleActions='<button class="btn light" data-action="export-csv" data-what="report">↓ 导出'+period+'经营报表 CSV</button>';
-    const tabs='<div class="yd-v6-toolbar"><div class="chip-group">'+[['day','日报 / 今日'],['week','周报 / 本周'],['month','月报 / 本月']].map(([k,label])=>'<button data-action="period" data-period="'+k+'" class="'+(ui.reportPeriod===k?'active':'')+'">'+label+'</button>').join('')+'</div><button class="btn light" data-action="report-adjust">＋ 人工调整收入</button><button class="btn light" data-action="expense-new">＋ 登记经营支出</button></div>';
+    const tabs='<div class="yd-v6-toolbar"><div class="chip-group">'+[['day','日报 / 今日'],['week','周报 / 本周'],['month','月报 / 本月']].map(([k,label])=>'<button data-action="period" data-period="'+k+'" class="'+(ui.reportPeriod===k?'active':'')+'">'+label+'</button>').join('')+'</div><button class="btn light" data-action="report-adjust">＋ 人工调整收入</button><button class="btn light" data-action="expense-new">＋ 登记杂费</button><button class="btn light" data-action="expense-categories">管理杂费项目</button></div>';
     const stats='<div class="stats">'+stat('实际收款',money(r.paid))+stat('调整后营业额',money(r.revenue))+stat('经营支出（不含进货）',money(r.operatingCosts))+stat('暂估利润*',money(r.profit),'',r.profit<0)+'</div>';
     const summary='<div class="two-col"><section class="panel"><h3>'+period+'经营汇总</h3>'+[
       ['有效结账订单',r.orders.length+'笔'],['系统应收',money(r.due)],['订单实际收款',money(r.paid)],['人工收入调整',money(r.adjustment)],['调整后营业额',money(r.revenue)],['已录入的非进货支出',money(r.operatingCosts)],['暂估利润（未计存货成本）',money(r.profit)],['登记进货金额（另列，不扣利润）',money(r.procurement)]
     ].map(([a,b])=>'<div class="summary-line"><span>'+a+'</span><strong>'+b+'</strong></div>').join('')+'</section><section class="panel"><h3>利润计算口径</h3><p class="yd-profit-formula">暂估利润 = 实际收款 + 人工收入调整 − 已登记的非进货经营支出</p><div class="note warning">* 暂估利润未扣除已售商品成本、存货变动、税费，以及尚未登记的房租、人工、水电等费用。即使报表显示正利润，也不代表真实净利润。进货金额另行统计，不能直接当作当期成本扣除。</div><p class="panel-sub">本机记录并非云端同步数据；不同设备目前仍可能不一致。</p></section></div>';
     const incomeList=r.adjustments.map(x=>'<div class="summary-line"><span>'+fmtDate(x.date)+' · '+esc(x.reason)+'</span><strong>'+money(x.amount)+'</strong><button class="textbtn" data-action="report-edit" data-id="'+esc(x.id)+'">修改</button><button class="textbtn yd-danger-text" data-action="entry-void" data-kind="adjustment" data-id="'+esc(x.id)+'">作废</button></div>').join('');
     const expenseList=r.expenses.map(x=>'<div class="summary-line"><span>'+fmtDate(x.date)+' · '+esc(x.category)+' · '+esc(x.note||'')+'</span><strong>'+money(x.amount)+'</strong><button class="textbtn" data-action="expense-edit" data-id="'+esc(x.id)+'">修改</button><button class="textbtn yd-danger-text" data-action="entry-void" data-kind="expense" data-id="'+esc(x.id)+'">作废</button></div>').join('');
-    const breakdown='<div class="two-col" style="margin-top:15px"><section class="panel"><h3>人工收入调整</h3><p class="panel-sub">只改报表口径，不覆盖已结账订单。</p>'+(incomeList||'<div class="empty">暂无人工调整</div>')+'</section><section class="panel"><h3>其他经营支出</h3><p class="panel-sub">仅填写非进货支出，例如房租、水电和人工。</p>'+(expenseList||'<div class="empty">暂无其他支出登记</div>')+'</section></div>';
+    const breakdown='<div class="two-col" style="margin-top:15px"><section class="panel"><h3>人工收入调整</h3><p class="panel-sub">只改报表口径，不覆盖已结账订单。</p>'+(incomeList||'<div class="empty">暂无人工调整</div>')+'</section><section class="panel"><h3>杂费与经营成本</h3><p class="panel-sub">买菜、水电、维修等费用按实际发生登记；可修改或作废。</p>'+(expenseList||'<div class="empty">暂无其他支出登记</div>')+'</section></div>';
     return title('经营报表','按日／周／月独立汇总、导出与人工调整。',titleActions)+tabs+stats+summary+breakdown;
   };
   const originalSettings=settingsPage;
@@ -110,19 +110,77 @@
     '<label class="yd-checkbox"><input type="checkbox" name="returnStock"> 商品实际已退回库存，并同步冲回对应出库记录（谨慎选择）</label>'+
     '<div class="form-actions"><button class="btn danger" type="submit">确认作废并保留记录</button></div></form>';
   }
+  // V16: user-managed operating expense projects; historic records remain intact.
+  const DEFAULT_EXPENSE_CATEGORIES=['买菜','水电','维修','房租','人工工资','其他杂费'];
+  function expenseCategories(){
+    const source=Array.isArray(data.expenseCategories)?data.expenseCategories:
+      DEFAULT_EXPENSE_CATEGORIES.concat(data.expenses.map(x=>x.category));
+    return [...new Set(source.filter(x=>typeof x==='string').map(x=>x.trim()).filter(Boolean))];
+  }
+  function canManageExpenses(){
+    const apple=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+    const mode=window.YouduSharedModeV10?.()||'local';
+    const issue=window.YouduSharedSyncV12?.getState()?.issue;
+    return !(apple&&!window.YouduNative)&&mode!=='viewer'&&
+      !['CONFLICT','READ_ONLY'].includes(issue)&&(!window.YouduNative||mode==='primary');
+  }
+  function commitExpenseCategories(next,action){
+    if(!canManageExpenses())return notify('请在华为主收银设备管理杂费项目');
+    const before=expenseCategories();data.expenseCategories=next;
+    log(action,'expense-categories',before,next,'管理杂费项目名称，保留已有支出账目');
+    save();render();renderDialog();notify('杂费项目已更新');
+  }
+  function addExpenseCategory(name){
+    if(!canManageExpenses())return notify('请在华为主收银设备管理杂费项目');
+    name=String(name||'').trim();const list=expenseCategories();
+    if(!name||name.length>30)return notify('项目名称请填写1至30个字');
+    if(list.some(x=>x.toLowerCase()===name.toLowerCase()))return notify('已有同名杂费项目');
+    if(ui.expenseDraft)ui.expenseDraft.category=name;
+    commitExpenseCategories([...list,name],'新增杂费项目');
+  }
+  function renameExpenseCategory(index,name){
+    if(!canManageExpenses())return notify('请在华为主收银设备管理杂费项目');
+    const list=expenseCategories();name=String(name||'').trim();
+    if(!Number.isInteger(index)||!list[index])return;
+    if(!name||name.length>30)return notify('项目名称请填写1至30个字');
+    if(list.some((x,i)=>i!==index&&x.toLowerCase()===name.toLowerCase()))return notify('已有同名杂费项目');
+    if(list[index]===name)return;
+    if(ui.expenseDraft?.category===list[index])ui.expenseDraft.category=name;
+    list[index]=name;commitExpenseCategories(list,'修改杂费项目名称');
+  }
+  function removeExpenseCategory(index){
+    if(!canManageExpenses())return notify('请在华为主收银设备管理杂费项目');
+    const list=expenseCategories();if(!Number.isInteger(index)||!list[index])return;
+    if(!window.confirm('删除杂费项目「'+list[index]+'」？已登记的支出账目会保留，以后可重新新增此项目。'))return;
+    list.splice(index,1);commitExpenseCategories(list,'删除杂费项目名称');
+  }
+  function expenseCategoryDialog(){
+    const list=expenseCategories();
+    return dialogHead('经营成本','管理杂费项目','项目名称可新增、修改和删除。已有支出账目保留原项目名称。')+
+      '<section class="panel"><div class="yd-v16-category-list">'+list.map((name,i)=>
+      '<div class="yd-v16-category-row"><input id="ydExpenseCategory'+i+'" maxlength="30" aria-label="杂费项目 '+esc(name)+'" value="'+esc(name)+'">'+
+      '<button type="button" class="btn light" data-action="expense-category-rename" data-index="'+i+'">改名</button>'+
+      '<button type="button" class="btn danger" data-action="expense-category-delete" data-index="'+i+'">删除项目</button></div>').join('')+
+      (!list.length?'<div class="empty">暂无杂费项目，请在下方添加。</div>':'')+'</div>'+
+      '<form id="v16ExpenseCategoryForm"><div class="field"><label>新增杂费项目</label><input name="name" maxlength="30" required placeholder="例如：买菜、水电、维修"></div>'+
+      '<div class="form-actions"><button class="btn fill" type="submit">＋ 添加项目</button></div></form>'+
+      (ui.expenseReturn?'<div class="form-actions"><button type="button" class="btn light fill" data-action="expense-category-return">完成，返回登记杂费</button></div>':'')+'</section>';
+  }
   function entryDialog(type){
     const adjust=type==='report-adjust'||type==='report-edit';
     const editing=type==='report-edit'||type==='expense-edit';
     const collection=adjust?data.reportAdjustments:data.expenses;
     const old=editing?collection.find(x=>x.id===ui.modal.id):null;
-    const label=adjust?'人工收入调整':'非进货经营支出';
+    const label=adjust?'人工收入调整':'杂费与经营成本';
+    const categories=expenseCategories();
+    if(old?.category&&!categories.includes(old.category))categories.push(old.category);
     return dialogHead('经营报表',(editing?'修改 · ':'新增 · ')+label,'不修改原始订单；所有新增和修改都保留记录。')+
     '<form id="'+(adjust?'v6AdjustmentForm':'v6ExpenseForm')+'" class="panel"><div class="form-grid">'+
-    '<div class="field"><label>发生日期及时间</label><input name="date" type="datetime-local" required value="'+inputDate(old?.date||Date.now())+'"></div>'+
-    '<div class="field"><label>'+(adjust?'调整金额（可为负数）':'支出金额（元）')+'</label><input name="amount" type="number" step="0.01" '+(adjust?'':'min="0.01"')+' required value="'+(old?.amount??'')+'" placeholder="'+(adjust?'例如 -20 或 50':'例如 300')+'"></div>'+
-    (adjust?'':'<div class="field wide"><label>支出分类</label><select name="category">'+['房租','人工工资','水电物业','设备维修','广告推广','其他经营支出'].map(x=>'<option '+(old?.category===x?'selected':'')+'>'+x+'</option>').join('')+'</select></div>')+
-    '<div class="field wide"><label>'+(adjust?'调整原因':'支出备注')+'</label><textarea name="note" maxlength="300" required placeholder="'+(adjust?'例如：收银差额核对、店内其它收入':'填写用途、凭证或经手说明')+'">'+esc(adjust?(old?.reason||''):(old?.note||''))+'</textarea></div>'+
-    (editing?'<div class="field wide"><label>本次修改原因（必填）</label><input name="changeReason" required maxlength="300" placeholder="例如：依据账单核对更正金额"></div>':'')+
+    '<div class="field"><label>发生日期及时间</label><input name="date" type="datetime-local" required value="'+inputDate((!adjust&&ui.expenseDraft?.date)||old?.date||Date.now())+'"></div>'+
+    '<div class="field"><label>'+(adjust?'调整金额（可为负数）':'支出金额（元）')+'</label><input name="amount" type="number" step="0.01" '+(adjust?'':'min="0.01"')+' required value="'+((!adjust?ui.expenseDraft?.amount:undefined)??old?.amount??'')+'" placeholder="'+(adjust?'例如 -20 或 50':'例如 300')+'"></div>'+
+    (adjust?'':'<div class="field wide"><label>杂费项目</label><select name="category" required>'+(!categories.length?'<option value="">请先添加杂费项目</option>':'')+categories.map(x=>'<option value="'+esc(x)+'" '+((ui.expenseDraft?.category??old?.category)===x?'selected':'')+'>'+esc(x)+'</option>').join('')+'</select><button type="button" class="textbtn" data-action="expense-categories">＋ 新增／管理杂费项目</button></div>')+
+    '<div class="field wide"><label>'+(adjust?'调整原因':'支出备注（可留空）')+'</label><textarea name="note" maxlength="300" '+(adjust?'required':'')+' placeholder="'+(adjust?'例如：收银差额核对、店内其它收入':'用途、凭证或经手说明（可不填）')+'">'+esc(adjust?(old?.reason||''):(ui.expenseDraft?.note??old?.note??''))+'</textarea></div>'+
+    (editing?'<div class="field wide"><label>本次修改原因（必填）</label><input name="changeReason" required maxlength="300" value="'+esc(ui.expenseDraft?.changeReason||'')+'" placeholder="例如：依据账单核对更正金额"></div>':'')+
     '</div><div class="form-actions"><button type="submit" class="btn fill">'+(editing?'保存修改并留痕':'确认登记')+'</button></div></form>';
   }
   function voidEntryDialog(){
@@ -133,10 +191,10 @@
   }
   renderDialog=function(){
     const t=ui.modal?.type;
-    if(!['order-edit','order-void','report-adjust','report-edit','expense-entry','expense-edit','entry-void'].includes(t))return baseRenderDialog();
+    if(!['order-edit','order-void','report-adjust','report-edit','expense-entry','expense-edit','expense-categories','entry-void'].includes(t))return baseRenderDialog();
     const box=$('dialog');
     box.classList.add('compact');
-    box.innerHTML=t==='order-edit'?editOrderDialog():t==='order-void'?voidOrderDialog():t==='entry-void'?voidEntryDialog():entryDialog(t);
+    box.innerHTML=t==='expense-categories'?expenseCategoryDialog():t==='order-edit'?editOrderDialog():t==='order-void'?voidOrderDialog():t==='entry-void'?voidEntryDialog():entryDialog(t);
     $('overlay').classList.remove('hidden');
     $('overlay').setAttribute('aria-hidden','false');
   };
@@ -180,24 +238,29 @@
   }
   function entrySave(form,kind){
     const adjust=kind==='adjustment',list=adjust?data.reportAdjustments:data.expenses;
+    if(!adjust&&!canManageExpenses())return notify('请在华为主收银设备登记或修改杂费');
     const editing=ui.modal.type==='report-edit'||ui.modal.type==='expense-edit';
     const old=editing?list.find(x=>x.id===ui.modal.id):null;
-    if(editing&&!old)return;
+    if(editing&&(!old||old.voidedAt))return;
     const amount=parseMoney(form.elements.amount.value,adjust);
     const dt=new Date(form.elements.date.value);
     const note=form.elements.note.value.trim();
-    const reason=editing?form.elements.changeReason.value.trim():note;
-    if(amount==null||(!adjust&&amount<=0)||!Number.isFinite(+dt)||+dt>Date.now()+86400000||note.length<2||reason.length<2){notify('请核对金额、日期及原因');return;}
+    const category=adjust?'':String(form.elements.category.value||'').trim();
+    const reason=editing?form.elements.changeReason.value.trim():(note||'登记'+category);
+    if(!adjust&&(!category||(!expenseCategories().includes(category)&&category!==old?.category)))return notify('请先添加或选择杂费项目');
+    if(amount==null||(!adjust&&amount<=0)||!Number.isFinite(+dt)||+dt>Date.now()+86400000||(adjust&&note.length<2)||reason.length<2){notify('请核对金额、日期及原因');return;}
     const before=old?clone(old):null,now=new Date().toISOString();
     const entry=old||{id:(adjust?'rev-':'exp-')+rid(),createdAt:now};
     if(adjust)Object.assign(entry,{date:dt.toISOString(),amount,reason:note});
-    else Object.assign(entry,{date:dt.toISOString(),amount,category:form.elements.category.value,note});
+    else Object.assign(entry,{date:dt.toISOString(),amount,category,note});
     if(!old)list.push(entry);
     log(editing?'修改'+(adjust?'收入调整':'经营支出'):'新增'+(adjust?'收入调整':'经营支出'),entry.id,before,entry,reason);
+    if(!adjust){ui.expenseDraft=null;ui.expenseReturn=null;}
     save();closeDialog();render();notify('已保存并保留调整记录');
   }
   function entryVoidSave(form){
     const adjust=ui.modal.kind==='adjustment';
+    if(!adjust&&!canManageExpenses())return notify('请在华为主收银设备作废杂费');
     const list=adjust?data.reportAdjustments:data.expenses;
     const item=list.find(x=>x.id===ui.modal.id);if(!item||item.voidedAt)return;
     const reason=form.elements.reason.value.trim();if(reason.length<2)return notify('请输入作废原因');
@@ -234,8 +297,20 @@
     else if(a==='void-order'){openDialog('order-void',id);}
     else if(a==='report-adjust'){openDialog('report-adjust','new');}
     else if(a==='report-edit'){openDialog('report-edit',id);}
-    else if(a==='expense-new'){openDialog('expense-entry','new');}
-    else if(a==='expense-edit'){openDialog('expense-edit',id);}
+    else if(a==='expense-new'){ui.expenseDraft=null;ui.expenseReturn=null;openDialog('expense-entry','new');}
+    else if(a==='expense-categories'){
+      if(!canManageExpenses())return notify('请在华为主收银设备管理杂费项目');
+      const form=document.getElementById('v6ExpenseForm');
+      if(form&&['expense-entry','expense-edit'].includes(ui.modal?.type)){
+        ui.expenseDraft={};for(const k of ['date','amount','category','note','changeReason'])if(form.elements[k])ui.expenseDraft[k]=form.elements[k].value;
+        ui.expenseReturn={type:ui.modal.type,id:ui.modal.id};
+      }else{ui.expenseDraft=null;ui.expenseReturn=null;}
+      openDialog('expense-categories','new');
+    }
+    else if(a==='expense-category-return'){const back=ui.expenseReturn;if(back)openDialog(back.type,back.id);} 
+    else if(a==='expense-category-rename'){const i=Number(b.dataset.index);renameExpenseCategory(i,$('ydExpenseCategory'+i)?.value);}
+    else if(a==='expense-category-delete'){removeExpenseCategory(Number(b.dataset.index));}
+    else if(a==='expense-edit'){ui.expenseDraft=null;ui.expenseReturn=null;openDialog('expense-edit',id);}
     else if(a==='entry-void'){ui.modal={type:'entry-void',id,kind:b.dataset.kind};renderDialog();}
     else if(a==='download-snapshot'){
       const original=localStorage.getItem(BASELINE);
@@ -248,6 +323,7 @@
   });
   document.addEventListener('submit',e=>{
     const id=e.target?.id;
+    if(id==='v16ExpenseCategoryForm'){e.preventDefault();addExpenseCategory(e.target.elements.name.value);return;}
     if(!['v6OrderEditForm','v6OrderVoidForm','v6AdjustmentForm','v6ExpenseForm','v6EntryVoidForm'].includes(id))return;
     e.preventDefault();
     if(id==='v6OrderEditForm')orderEditSave(e.target);
@@ -256,6 +332,12 @@
     else if(id==='v6ExpenseForm')entrySave(e.target,'expense');
     else if(id==='v6EntryVoidForm')entryVoidSave(e.target);
   });
+  window.YouduExpensesV16={categories:expenseCategories,addCategory:addExpenseCategory,renameCategory:renameExpenseCategory,removeCategory:removeExpenseCategory,
+    summary:()=>{const r=rangeData();return {operatingCosts:r.operatingCosts,profit:r.profit,count:r.expenses.length};}};
+  document.title='有度茶舍 · 店务管理 V16';
+  const expenseStyle=document.createElement('style');
+  expenseStyle.textContent='.yd-v16-category-row{display:flex;gap:8px;align-items:center;margin-bottom:12px}.yd-v16-category-row input{min-width:0;flex:1;min-height:44px;border:1px solid #d5dfcf;border-radius:8px;background:#fffefa;padding:10px;font-size:16px}.yd-v16-category-list{margin-bottom:23px}@media(max-width:600px){.yd-v16-category-row{flex-wrap:wrap}.yd-v16-category-row input{flex-basis:100%}.yd-v16-category-row button{flex:1}}';
+  document.head.appendChild(expenseStyle);
   const iconPaths={
     rooms:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
     products:'<path d="M4 7h16M4 12h16M4 17h16"/><circle cx="7" cy="7" r="1" fill="currentColor"/><circle cx="7" cy="12" r="1" fill="currentColor"/><circle cx="7" cy="17" r="1" fill="currentColor"/>',

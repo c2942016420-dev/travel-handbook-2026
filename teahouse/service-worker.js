@@ -1,4 +1,4 @@
-const VERSION='youdu-protected-v15-prices-inventory-20261023';
+const VERSION='youdu-protected-v16-expense-projects-20261025';
 const SHELL=['./enhancements-v6.js','./enhancements-v7.js','./backup-client-v7.js','./corrections-v8.js','./iphone-viewer-v14.js','./sync-client-v12.js','./receipt-client-v14_1.js','./excel-v15.js','./enhancements-v15.js','./assets/theme-bamboo.svg','./assets/theme-leaf.svg','./index.html','./manifest.webmanifest','./assets/brand-logo.png','./assets/app-icon.svg'];
 const ROOT=self.registration.scope;
 self.addEventListener('install',e=>e.waitUntil((async()=>{const c=await caches.open(VERSION);await c.addAll(SHELL.map(p=>new Request(new URL(p,ROOT),{cache:'reload',credentials:'same-origin'})));await self.skipWaiting()})()));
@@ -7,3 +7,4 @@ self.addEventListener('fetch',e=>{const q=e.request;if(q.method!=='GET'||new URL
 const safe=r=>r.ok&&!r.redirected&&new URL(r.url).pathname!=='/login';
 if(q.mode==='navigate'){e.respondWith((async()=>{try{const r=await fetch(q);if(safe(r)){const c=await caches.open(VERSION);await c.put(q,r.clone())}return r}catch{const c=await caches.open(VERSION);return await c.match(q,{ignoreSearch:true})||await c.match(new URL('./index.html',ROOT))||Response.error()}})());return;}
 e.respondWith((async()=>{const c=await caches.open(VERSION);const hit=await c.match(q,{ignoreSearch:true});if(hit)return hit;try{const r=await fetch(q);if(safe(r))await c.put(q,r.clone());return r}catch{return Response.error()}})())});
+
