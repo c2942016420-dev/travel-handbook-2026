@@ -27,7 +27,7 @@ jobs:
           import fs from 'node:fs';
           const html = fs.readFileSync('public/index.html','utf8');
           const start = html.indexOf('const days = ')+13;
-          const end = html.indexOf('\n];\n\nfunction renderBookings',start);
+          const end = html.indexOf('\n];',start);
           if (start<13 || end<0) throw new Error('Cannot read itinerary data');
           const days=JSON.parse(html.slice(start,end+2));
           if(days.length!==17)throw new Error('Expected 17 trip days');
