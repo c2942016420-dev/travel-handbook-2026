@@ -55,14 +55,42 @@ jobs:
           console.log('19 Nov: '+d19.items.map(x=>x.time+' '+x.title).join(' | '));
           console.log('PASS: 17-day itinerary, all revised Istanbul stops present.');
           NODE
+      - name: Verify ferry timetable guide and inline JavaScript syntax
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import vm from 'node:vm';
+          const html=fs.readFileSync('public/index.html','utf8');
+          for(const token of [
+            '轮渡查询｜其他班次、官方时刻表、Google Maps',
+            'const ferrySchedules = ',
+            'Karaköy → Kadıköy（去程）',
+            'Kadıköy → Eminönü（直接回旧城）',
+            'Ortaköy → Üsküdar｜周四全部直达班次',
+            'https://www.google.com/maps/dir/?api=1',
+            'Kadikoy Sehir Hatlari Iskelesi Istanbul',
+            'Eminonu Sehir Hatlari Iskelesi Istanbul'
+          ]) {
+            if(!html.includes(token))throw new Error('Missing ferry guide content: '+token);
+          }
+          const scripts=[...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
+          let checked=0;
+          for(const m of scripts){
+            if(/\bsrc\s*=/.test(m[1]) || !m[2].trim())continue;
+            new vm.Script(m[2],{filename:'inline-trip-script-'+checked+'.js'});
+            checked++;
+          }
+          if(!checked)throw new Error('No inline JavaScript checked');
+          console.log('PASS: ferry guide, Google Maps links, map piers and '+checked+' inline scripts parse correctly');
+          NODE
       - name: Check Cloudflare live version (informational)
         run: |
           SITE="https://green-snow-6c3b.c2942016420.workers.dev/?check=ist-20261102-${{ github.sha }}"
           for attempt in 1 2 3 4 5; do
             echo "Cloudflare live verification attempt $attempt"
             if curl -fsSL --compressed --connect-timeout 10 --max-time 30 -H "Cache-Control: no-cache" "$SITE" -o /tmp/verity-travel-live.html; then
-              if grep -Fq 'Salacak海滨｜少女塔' /tmp/verity-travel-live.html && grep -Fq 'Ortaköy → Üsküdar' /tmp/verity-travel-live.html && grep -Fq 'Seven Hills → 圣索菲亚' /tmp/verity-travel-live.html; then
-                echo 'LIVE_CONFIRMED: Cloudflare HTML includes the revised 19 Nov Salacak sunset and ferry.'
+              if grep -Fq 'Salacak海滨｜少女塔' /tmp/verity-travel-live.html && grep -Fq 'Ortaköy → Üsküdar' /tmp/verity-travel-live.html && grep -Fq 'Seven Hills → 圣索菲亚' /tmp/verity-travel-live.html && grep -Fq '轮渡查询｜其他班次、官方时刻表、Google Maps' /tmp/verity-travel-live.html && grep -Fq 'Kadıköy → Eminönü（直接回旧城）' /tmp/verity-travel-live.html; then
+                echo 'LIVE_CONFIRMED: Cloudflare HTML includes current Istanbul itinerary, full ferry guide, and Google Maps links.'
                 exit 0
               fi
               echo 'LIVE_NOT_UPDATED: response loaded, but revised itinerary not yet found.'
