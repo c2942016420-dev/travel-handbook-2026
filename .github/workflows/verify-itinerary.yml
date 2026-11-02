@@ -48,3 +48,20 @@ jobs:
           }
           console.log('PASS: 17-day itinerary, all confirmed Istanbul stops present.');
           NODE
+      - name: Check Cloudflare live version (informational)
+        run: |
+          SITE="https://green-snow-6c3b.c2942016420.workers.dev/?check=ist-20261102-${{ github.sha }}"
+          for attempt in 1 2 3 4 5; do
+            echo "Cloudflare live verification attempt $attempt"
+            if curl -fsSL --compressed --connect-timeout 10 --max-time 30 -H "Cache-Control: no-cache" "$SITE" -o /tmp/verity-travel-live.html; then
+              if grep -Fq 'Salacak海滨｜少女塔' /tmp/verity-travel-live.html && grep -Fq 'Ortaköy → Üsküdar' /tmp/verity-travel-live.html; then
+                echo 'LIVE_CONFIRMED: Cloudflare HTML includes the revised 19 Nov Salacak sunset and ferry.'
+                exit 0
+              fi
+              echo 'LIVE_NOT_UPDATED: response loaded, but revised itinerary not yet found.'
+            else
+              echo 'LIVE_UNREACHABLE: Cloudflare HTTP request failed.'
+            fi
+            sleep 12
+          done
+          echo '::warning::Cloudflare live version could not be confirmed; GitHub source and build are verified.'
