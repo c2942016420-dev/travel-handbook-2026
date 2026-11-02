@@ -599,7 +599,7 @@ const mapPoints = {
 function injectFerryGuide(html){
   const anchor='${routeDetails(d,idx)}${introHtml(d.cityKey)}';
   if(html.split(anchor).length!==2)throw Error('Could not locate unique day rendering insertion point');
-  if(html.split('</style>').length!==2)throw Error('Expected exactly one closing style tag');
+  if(!html.includes('</style>'))throw Error('Missing CSS closing style tag');
   if(html.split('\nfunction renderBookings(){').length!==2)throw Error('Could not find unique day-data end anchor');
   const guideSource='\nconst ferrySchedules = '+JSON.stringify(ferrySchedules)+';\n'+ferryGuideHtml.toString()+'\n';
   let updated=html.replace('</style>',ferryCSS+'</style>');
