@@ -50,6 +50,7 @@ function applyItinerary(original) {
   const cafe14 = find('11/14', 'Galata Konak Cafe｜露台');
   const bridgeFrom19 = find('11/19', '加拉塔大桥｜蓝调必拍');
   const ferry14 = find('11/14', '公共轮渡夜景与晚饭');
+  const sevenFrom14 = find('11/14', 'Seven Hills｜屋顶');
   date14.route = [
     'Sabiha Gokcen Airport',
     'Constantinopolis Hotel Istanbul',
@@ -113,7 +114,6 @@ function applyItinerary(original) {
   // Sun 15 Nov: Blue Mosque -> Seven Hills -> Dolmabahce -> SAW airport.
   const breakfast15 = find('11/15', '早餐、退房');
   const mosque15 = find('11/15', '苏丹艾哈迈德清真寺');
-  const sevenFrom14 = find('11/14', 'Seven Hills｜屋顶');
   const palace15 = find('11/15', '多尔玛巴赫切新皇宫');
   const toAirport15 = find('11/15', '回酒店取行李 →');
   const flight15 = find('11/15', 'VF3270');
