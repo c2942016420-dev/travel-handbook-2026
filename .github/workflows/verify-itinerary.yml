@@ -33,9 +33,9 @@ jobs:
           if(days.length!==17)throw new Error('Expected 17 trip days');
           const required={
             '11/14':['加拉塔塔','Galata Konak Cafe','加拉塔大桥','公共轮渡'],
-            '11/15':['蓝色清真寺','Seven Hills','多尔玛巴赫切'],
+            '11/15':['蓝色清真寺','Seven Hills','圣索菲亚'],
             '11/18':['SAW机场 → Sultanahmet酒店'],
-            '11/19':['圣索菲亚','苏莱曼尼耶','奥塔科伊清真寺','Ortaköy','Üsküdar','Salacak','少女塔'],
+            '11/19':['苏莱曼尼耶','多尔玛巴赫切','奥塔科伊清真寺','Ortaköy','Üsküdar','Salacak','少女塔'],
             '11/20':['地下水宫']
           };
           for(const [date,stops] of Object.entries(required)){
@@ -46,7 +46,14 @@ jobs:
               if(!title.includes(stop))throw new Error('Missing '+stop+' on '+date);
             }
           }
-          console.log('PASS: 17-day itinerary, all confirmed Istanbul stops present.');
+          const d15=days.find(d=>d.date==='11/15');
+          const d19=days.find(d=>d.date==='11/19');
+          if(d15.items.some(x=>x.title.includes('多尔玛巴赫切')))throw Error('Palace must move off 15 Nov');
+          if(!d19.items.some(x=>x.title.includes('15:50') || x.time.includes('15:50')))throw Error('19 Nov ferry missing');
+          const findTime=(day,needle)=>day.items.find(x=>x.title.includes(needle))?.time??'';
+          console.log('15 Nov: '+d15.items.map(x=>x.time+' '+x.title).join(' | '));
+          console.log('19 Nov: '+d19.items.map(x=>x.time+' '+x.title).join(' | '));
+          console.log('PASS: 17-day itinerary, all revised Istanbul stops present.');
           NODE
       - name: Check Cloudflare live version (informational)
         run: |
@@ -54,7 +61,7 @@ jobs:
           for attempt in 1 2 3 4 5; do
             echo "Cloudflare live verification attempt $attempt"
             if curl -fsSL --compressed --connect-timeout 10 --max-time 30 -H "Cache-Control: no-cache" "$SITE" -o /tmp/verity-travel-live.html; then
-              if grep -Fq 'Salacak海滨｜少女塔' /tmp/verity-travel-live.html && grep -Fq 'Ortaköy → Üsküdar' /tmp/verity-travel-live.html; then
+              if grep -Fq 'Salacak海滨｜少女塔' /tmp/verity-travel-live.html && grep -Fq 'Ortaköy → Üsküdar' /tmp/verity-travel-live.html && grep -Fq 'Seven Hills → 圣索菲亚' /tmp/verity-travel-live.html; then
                 echo 'LIVE_CONFIRMED: Cloudflare HTML includes the revised 19 Nov Salacak sunset and ferry.'
                 exit 0
               fi
