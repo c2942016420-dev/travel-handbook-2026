@@ -421,8 +421,192 @@ function applyItinerary(original) {
     }
   }
   const modifiedJson = JSON.stringify(days, null, 2);
-  const updated = original.slice(0, jsonStart) + modifiedJson + original.slice(finish + 2);
+  let updated = original.slice(0, jsonStart) + modifiedJson + original.slice(finish + 2);
   if (!updated.includes('function renderBookings')) throw new Error('Incomplete output.');
+  updated = injectFerryGuide(updated);
+  return updated;
+}
+
+
+// Include an optional, date-specific public ferry departure reference and live lookup links.
+const ferrySchedules = {
+  "11/14": {
+    "heading": "11月14日（周六）｜夜间公共轮渡班次查询",
+    "lead": "按现场进度选船，不必硬赶19:45。两段船分别查询；第一段在Kadıköy下船，第二段希望在Eminönü下船。以下是官网目前公布的晚间计划班次，并非实时船况。",
+    "columns": [
+      {
+        "title": "① Karaköy → Kadıköy（去程）",
+        "note": "约30分钟。途经Eminönü也不要下船；晚间上船时间可灵活选。20:55班不停靠载客，请勿当作可上船班次。",
+        "times": [
+          "17:05",
+          "17:25",
+          "17:45",
+          "18:05",
+          "18:25",
+          "18:45",
+          "19:05",
+          "19:25",
+          "19:45",
+          "20:05",
+          "20:25",
+          "21:00",
+          "21:30",
+          "22:00",
+          "22:30",
+          "23:00",
+          "23:30",
+          "00:00",
+          "00:30",
+          "01:00"
+        ]
+      },
+      {
+        "title": "② Kadıköy → Eminönü（直接回旧城）",
+        "note": "约30分钟。20:30是这条路线表里最后一班经Karaköy继续到Eminönü的船；若错过，请改看第三列。",
+        "times": [
+          "17:00",
+          "17:20",
+          "17:40",
+          "18:00",
+          "18:20",
+          "18:40",
+          "19:00",
+          "19:20",
+          "19:40",
+          "20:00",
+          "20:30"
+        ]
+      },
+      {
+        "title": "③ 太晚了：Kadıköy → Karaköy（备选）",
+        "note": "错过20:30直达Eminönü后，可搭往Karaköy的公共轮渡，再坐T1电车回Sultanahmet；不要误以为这些船也会停Eminönü。",
+        "times": [
+          "21:00",
+          "21:30",
+          "22:00",
+          "22:30",
+          "23:00",
+          "23:30",
+          "00:00",
+          "00:30",
+          "01:00"
+        ]
+      }
+    ],
+    "recommended": "省等船方案示例：19:45 Karaköy出发 → 20:15到Kadıköy → 20:30返程 → 21:00到Eminönü；中间仅15分钟换船，前提是码头换乘来得及。若选更早一班或错过班次，打开完整时刻表临场重新配对。",
+    "links": [
+      [
+        "官方时刻表｜全天所有班次",
+        "https://sehirhatlari.istanbul/tr/seferler/ic-hatlar/istanbul-ici-hatlar/kadikoy-karakoy-163"
+      ],
+      [
+        "Google Maps｜去程",
+        "https://www.google.com/maps/dir/?api=1&origin=Karakoy%20Sehir%20Hatlari%20Iskelesi%20Istanbul&destination=Kadikoy%20Sehir%20Hatlari%20Iskelesi%20Istanbul&travelmode=transit"
+      ],
+      [
+        "Google Maps｜返程",
+        "https://www.google.com/maps/dir/?api=1&origin=Kadikoy%20Sehir%20Hatlari%20Iskelesi%20Istanbul&destination=Eminonu%20Sehir%20Hatlari%20Iskelesi%20Istanbul&travelmode=transit"
+      ],
+      [
+        "Google Maps｜晚归备选",
+        "https://www.google.com/maps/dir/?api=1&origin=Kadikoy%20Sehir%20Hatlari%20Iskelesi%20Istanbul&destination=Karakoy%20Sehir%20Hatlari%20Iskelesi%20Istanbul&travelmode=transit"
+      ]
+    ]
+  },
+  "11/19": {
+    "heading": "11月19日（周四）｜跨海峡轮渡全部班次",
+    "lead": "Ortaköy → Üsküdar这条直达船并不频繁。若仍要在Salacak看少女塔日落，建议优先15:50出发；不是必须搭这一班，但换船方案要在当天下午及时查看。",
+    "columns": [
+      {
+        "title": "Ortaköy → Üsküdar｜周四全部直达班次",
+        "note": "官方工作日完整班次：约10分钟横渡，到了Üsküdar就下船；不要继续坐到Kadıköy。",
+        "times": [
+          "08:05",
+          "08:55",
+          "10:15",
+          "11:50",
+          "15:50",
+          "17:15",
+          "18:45"
+        ]
+      },
+      {
+        "title": "如果错过15:50",
+        "note": "17:15从Ortaköy出发、17:25到Üsküdar，步行到Salacak时很可能已经日落；想保住日落，需立刻查Google Maps从Ortaköy公交去Beşiktaş，再从Beşiktaş搭更频繁的渡轮到Üsküdar。另一备选是留在Ortaköy看海峡日落。",
+        "times": []
+      }
+    ],
+    "recommended": "建议15:20–15:30开始核对船班并走向登船口，尽量在16:30前抵达Salacak海滨。若真实时间变动，优先保住日落机位，不必死守指定码头。",
+    "links": [
+      [
+        "官方时刻表｜Ortaköy全部直达班次",
+        "https://sehirhatlari.istanbul/tr/seferler/ic-hatlar/bogaz-hatlari/ortakoy-uskudar-kadikoy-173"
+      ],
+      [
+        "Google Maps｜Ortaköy → Üsküdar",
+        "https://www.google.com/maps/dir/?api=1&origin=Ortakoy%20Sehir%20Hatlari%20Iskelesi%20Istanbul&destination=Uskudar%20Sehir%20Hatlari%20Iskelesi%20Istanbul&travelmode=transit"
+      ],
+      [
+        "Google Maps｜错过直达船的替代路线",
+        "https://www.google.com/maps/dir/?api=1&origin=Ortakoy%20Istanbul&destination=Salacak%20Sahili%20Uskudar%20Istanbul&travelmode=transit"
+      ],
+      [
+        "Google Maps｜Beşiktaş → Üsküdar",
+        "https://www.google.com/maps/dir/?api=1&origin=Besiktas%20Dentur%20Avrasya%20Iskelesi%20Istanbul&destination=Uskudar%20Dentur%20Avrasya%20Iskelesi%20Istanbul&travelmode=transit"
+      ]
+    ]
+  }
+};
+function ferryGuideHtml(d){
+  const guide=ferrySchedules[d.date];
+  if(!guide)return '';
+  const cols=guide.columns.map(c=>
+    '<div class="ferry-col"><h5>'+c.title+'</h5>'+
+    (c.times.length?'<p class="ferry-times">'+c.times.map(t=>'<span>'+t+'</span>').join('')+'</p>':'')+
+    '<p class="ferry-small">'+c.note+'</p></div>'
+  ).join('');
+  const links=guide.links.map(a=>'<a class="btn info" href="'+a[1]+'" target="_blank" rel="noopener noreferrer">'+a[0]+' ↗</a>').join('');
+  return '<details class="ferry-guide"><summary>轮渡查询｜其他班次、官方时刻表、Google Maps</summary>'+
+    '<div class="ferry-guide-body"><h4>'+guide.heading+'</h4><p>'+guide.lead+'</p>'+
+    '<div class="ferry-columns">'+cols+'</div><p class="ferry-recommended">'+guide.recommended+'</p>'+
+    '<div class="ferry-links">'+links+'</div>'+
+    '<p class="ferry-disclaimer">资料核对于2026-11-02。网页显示计划船班，不会自动更新；到场前以Şehir Hatları官网、现场电子屏及当天停航公告为准。Google Maps打开后选择“公共交通”，可切换出发日期和时间并查看更多班次；它不一定默认推荐轮渡。</p>'+
+    '</div></details>';
+}
+const ferryCSS = "\n.ferry-guide{margin:12px 18px 18px;border:1px solid var(--line);border-radius:14px;background:color-mix(in srgb,var(--accent) 4%,var(--paper));overflow:hidden}\n.ferry-guide>summary{cursor:pointer;list-style:disclosure-closed;padding:15px 16px;font-size:14px;font-weight:800;color:var(--accent)}\n.ferry-guide[open]>summary{border-bottom:1px solid var(--line)}\n.ferry-guide-body{padding:14px 15px 17px}\n.ferry-guide-body>h4{margin:0 0 8px;font-size:15px}\n.ferry-guide-body>p{color:var(--muted);font-size:13px;line-height:1.75;margin:7px 0 13px}\n.ferry-columns{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:9px}\n.ferry-col{border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:12px}\n.ferry-col h5{font-size:13px;margin:0 0 8px;color:var(--ink)}\n.ferry-col .ferry-times{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 9px}\n.ferry-col .ferry-times span{font-variant-numeric:tabular-nums;font-size:12px;font-weight:700;border-radius:6px;padding:3px 6px;background:color-mix(in srgb,var(--accent) 10%,var(--paper));color:var(--ink)}\n.ferry-col .ferry-small{font-size:12px;color:var(--muted);margin:6px 0 0;line-height:1.75}\n.ferry-guide-body .ferry-recommended{color:var(--ink);font-weight:650;border-left:3px solid var(--accent);padding-left:10px;margin-top:13px}\n.ferry-links{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}\n.ferry-links .btn{font-size:12px;padding:8px 10px}\n.ferry-guide-body .ferry-disclaimer{font-size:11px;margin:12px 0 0}\n";
+const mapPoints = {
+  "Kadikoy Sehir Hatlari Iskelesi Istanbul": [
+    40.992965,
+    29.022855,
+    "Kadıköy轮渡码头附近；登船口以船公司及线路指示为准"
+  ],
+  "Eminonu Sehir Hatlari Iskelesi Istanbul": [
+    41.018,
+    28.97414,
+    "Eminönü公共轮渡码头区域，附近有T1电车站"
+  ],
+  "Uskudar Ferry Terminal Istanbul": [
+    41.02814,
+    29.01529,
+    "Üsküdar码头区域，登船口和轮渡公司现场确认"
+  ],
+  "Salacak Sahili Istanbul": [
+    41.0211,
+    29.0044,
+    "少女塔对岸Salacak海滨拍摄机位；岸边安全优先"
+  ]
+};
+function injectFerryGuide(html){
+  const anchor='${routeDetails(d,idx)}${introHtml(d.cityKey)}';
+  if(html.split(anchor).length!==2)throw Error('Could not locate unique day rendering insertion point');
+  if(html.split('</style>').length!==2)throw Error('Expected exactly one closing style tag');
+  if(html.split('\nfunction renderBookings(){').length!==2)throw Error('Could not find unique day-data end anchor');
+  const guideSource='\nconst ferrySchedules = '+JSON.stringify(ferrySchedules)+';\n'+ferryGuideHtml.toString()+'\n';
+  let updated=html.replace('</style>',ferryCSS+'</style>');
+  updated=updated.replace('const dayMapPoints = {','const dayMapPoints = {\n'+Object.entries(mapPoints).map(([key,coords])=>JSON.stringify(key)+': '+JSON.stringify(coords)+',').join('\n')+'\n');
+  updated=updated.replace(anchor,'${routeDetails(d,idx)}${ferryGuideHtml(d)}${introHtml(d.cityKey)}');
+  updated=updated.replace('\nfunction renderBookings(){',guideSource+'\nfunction renderBookings(){');
+  if(!updated.includes('轮渡查询｜其他班次') || !updated.includes('Kadikoy Sehir Hatlari Iskelesi Istanbul'))throw Error('Ferry guide injection incomplete');
   return updated;
 }
 
