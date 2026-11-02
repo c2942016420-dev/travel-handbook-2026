@@ -1,0 +1,50 @@
+name: Verify travel handbook itinerary build
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'build.sh'
+      - 'patch-itinerary.mjs'
+      - '.source/**'
+      - '.github/workflows/verify-itinerary.yml'
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out site source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Rebuild page and apply itinerary
+        run: bash build.sh
+      - name: Verify required Istanbul stops and preserve dates
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const html = fs.readFileSync('public/index.html','utf8');
+          const start = html.indexOf('const days = ')+13;
+          const end = html.indexOf('\n];\n\nfunction renderBookings',start);
+          if (start<13 || end<0) throw new Error('Cannot read itinerary data');
+          const days=JSON.parse(html.slice(start,end+2));
+          if(days.length!==17)throw new Error('Expected 17 trip days');
+          const required={
+            '11/14':['加拉塔塔','Galata Konak Cafe','加拉塔大桥','公共轮渡'],
+            '11/15':['蓝色清真寺','Seven Hills','多尔玛巴赫切'],
+            '11/18':['SAW机场 → Sultanahmet酒店'],
+            '11/19':['圣索菲亚','苏莱曼尼耶','奥塔科伊清真寺','Ortaköy','Üsküdar','Salacak','少女塔'],
+            '11/20':['地下水宫']
+          };
+          for(const [date,stops] of Object.entries(required)){
+            const day=days.find(d=>d.date===date);
+            if(!day)throw new Error('Missing date '+date);
+            const title=day.items.map(e=>e.title).join(' | ');
+            for(const stop of stops){
+              if(!title.includes(stop))throw new Error('Missing '+stop+' on '+date);
+            }
+          }
+          console.log('PASS: 17-day itinerary, all confirmed Istanbul stops present.');
+          NODE
