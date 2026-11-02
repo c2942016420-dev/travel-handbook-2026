@@ -396,8 +396,8 @@ function applyItinerary(original) {
   const titles = (date) => byDate(date).items.map((item) => item.title).join(' | ');
   for (const [date, required] of [
     ['11/14', ['加拉塔塔', 'Galata Konak Cafe', '加拉塔大桥', '公共轮渡']],
-    ['11/15', ['蓝色清真寺', 'Seven Hills', '多尔玛巴赫切']],
-    ['11/19', ['圣索菲亚', '苏莱曼尼耶', '奥塔科伊清真寺', 'Ortaköy', 'Üsküdar', 'Salacak', '少女塔']],
+    ['11/15', ['蓝色清真寺', 'Seven Hills', '圣索菲亚']],
+    ['11/19', ['苏莱曼尼耶', '多尔玛巴赫切', '奥塔科伊清真寺', 'Ortaköy', 'Üsküdar', 'Salacak', '少女塔']],
     ['11/20', ['地下水宫']]
   ]) {
     for (const name of required) {
