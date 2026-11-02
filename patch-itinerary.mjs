@@ -255,6 +255,137 @@ function applyItinerary(original) {
     )
   ];
 
+
+  // Final geographic optimization (2 Nov): keep departure day near the hotel;
+  // move palace to 19 Nov, between Suleymaniye and Ortakoy's cross-strait ferry.
+  // 18 Nov lands at SAW at 23:00, so 19 Nov starts around 09:15, not at dawn.
+  date15.route = [
+    'Constantinopolis Hotel Istanbul',
+    'Blue Mosque Istanbul',
+    'Seven Hills Restaurant Istanbul',
+    'Hagia Sophia Istanbul',
+    'Constantinopolis Hotel Istanbul',
+    'Sabiha Gokcen Airport',
+    'Nevsehir Kapadokya Airport',
+    'Angels City Cave Hotel Cappadocia'
+  ];
+  date15.items = [
+    breakfast15,
+    {
+      ...mosque15,
+      time: '08:30–09:15',
+      desc: '15日周日08:30先参观蓝色清真寺。预留45分钟看蓝色瓷砖、穹顶及庭院。免费入内，女性带头巾，遮肩过膝，进入室内需脱鞋；礼拜时间可能暂时不接待游客。上午始终留在Sultanahmet酒店附近，不去新皇宫。'
+    },
+    {
+      ...sevenFrom14,
+      time: '09:20–10:05',
+      title: 'Seven Hills｜屋顶早餐、海鸥及圣索菲亚机位',
+      desc: '步行约5分钟到Seven Hills Restaurant（Tevkifhane Sokak No:8，不要导航到Seven Hills Palace），利用早晨光线拍蓝色清真寺、圣索菲亚和马尔马拉海。餐厅官网早餐从08:00供应，09:20可入座，预留45分钟拍照和简餐；露台及喂鸟许可、消费要求以餐厅当天为准。10:05左右步行去圣索菲亚游客入口。'
+    },
+    add(
+      '10:05–10:15',
+      'Seven Hills → 圣索菲亚｜步行',
+      '两个地点位于同一历史街区，步行约5–10分钟即可到游客入口。圣索菲亚文化参观和礼拜入口不同，按购票凭证和现场指引排队。',
+      'Hagia Sophia Istanbul'
+    ),
+    {
+      ...sophia19,
+      time: '10:15–11:40',
+      desc: '参观圣索菲亚上层游客廊，重点观察巨大穹顶、拜占庭马赛克与奥斯曼时期的建筑层次。这里是文化参观的独立售票路线，预留约85分钟含安检及拍照，但实际排队时间需以现场为准。可提前购买指定时段门票，不能跳过安检；女性带头巾，穿着遮肩过膝。11:40左右结束后直接步行回Sultanahmet酒店，不再跨城去新皇宫。若发生延误，优先保证14:00前往SAW的机场交通。'
+    },
+    add(
+      '11:40–12:05',
+      '圣索菲亚 → Constantinopolis Hotel｜回酒店',
+      '从圣索菲亚步行回位于Küçük Ayasofya的酒店，预留约15–25分钟含路上拍照和小坡路。三个上午景点全部在酒店周边，行李仍在酒店前台寄存。',
+      'Constantinopolis Hotel Istanbul'
+    ),
+    add(
+      '12:05–13:30',
+      '午餐、取行李及航班缓冲',
+      '在酒店附近午餐、取回寄存行李、上洗手间并检查机票和证件。留有约1小时多的机动时间；不增加景点。14:00前出发去SAW，避免国内航班当天下午还要跨城赶车。',
+      'Constantinopolis Hotel Istanbul'
+    ),
+    {
+      ...toAirport15,
+      time: '13:30–14:00｜最迟14:00启程',
+      desc: '今天不再从多尔玛巴赫切远距离返回酒店。取行李后从Sultanahmet出发，优先走Sirkeci站 → Marmaray到Ayrılık Çeşmesi → 换M4地铁至Sabiha Gökçen Airport (SAW)。从酒店走到Sirkeci有坡路和石板街，拖箱须预留额外时间；地铁/车站班次与换乘以当日导航为准。目标约16:00左右抵达机场，19:55国内航班留充足办理托运、安检余量。',
+      map: 'Sabiha Gokcen Airport'
+    },
+    flight15,
+    hotelNar15
+  ];
+
+  const ferry19 = find('11/19', 'Ortaköy → Üsküdar');
+  const walkToSalacak19 = find('11/19', 'Üsküdar码头 → Salacak');
+  const sunsetSalacak19 = find('11/19', 'Salacak海滨｜少女塔');
+  const return19 = find('11/19', 'Üsküdar晚餐');
+  date19.route = [
+    'Constantinopolis Hotel Istanbul',
+    'Suleymaniye Mosque Istanbul',
+    'Dolmabahce Palace',
+    'Ortakoy Mosque Istanbul',
+    'Ortakoy Iskelesi Istanbul',
+    'Uskudar Ferry Terminal Istanbul',
+    'Salacak Sahili Istanbul',
+    'Constantinopolis Hotel Istanbul'
+  ];
+  date19.items = [
+    add(
+      '08:35–09:15',
+      '酒店 → 苏莱曼尼耶清真寺｜步行 / T1结合步行',
+      '前一晚23:00才到达SAW，19日不安排七点前起床。预计08:35离开酒店，在旧城前往Süleymaniye：可步行约35–40分钟，也可到Sultanahmet站搭T1至Eminönü后步行上坡。到达时间按交通及体力调整。',
+      'Suleymaniye Mosque Istanbul'
+    ),
+    {
+      ...sule19,
+      time: '09:15–10:00',
+      desc: '苏莱曼大帝的皇家清真寺由米马尔·希南设计，位于金角湾上方，是欣赏旧城天际线的绝佳高点。免费参观，预留45分钟看庭院、室内及金角湾方向外景。带头巾、遮肩过膝，入内脱鞋；避开礼拜暂停参观时段。10:00左右离开去Kabataş方向，接着参观新皇宫。'
+    },
+    add(
+      '10:00–11:00',
+      '苏莱曼尼耶 → 多尔玛巴赫切宫｜下坡步行 + T1',
+      '从清真寺往Eminönü步行下坡约15–20分钟，再乘T1往Kabataş方向至终点站，步行约10–15分钟到多尔玛巴赫切宫正门。全程预留约60分钟，包含候车、上坡/下坡和入园找入口；无需返回Sultanahmet酒店。',
+      'Dolmabahce Palace'
+    ),
+    {
+      ...palace15,
+      time: '11:00–13:10',
+      desc: '多尔玛巴赫切宫放在11月19日周四：土耳其国家宫殿管理局公布其周一闭馆、09:00开票，周四可参观。预留约2小时10分钟，优先参观主宫殿（Selamlık）和临海庭院，实际排队和检票需额外注意。若希望完整看后宫与绘画博物馆，需增加时间，可能压缩奥塔科伊和固定轮渡班次；本日不建议全馆通刷。室内摄影遵守现场禁令。最迟13:10离开，以保住15:50奥塔科伊轮渡及17:42左右少女塔日落。'
+    },
+    add(
+      '13:10–14:00｜含等车与拥堵缓冲',
+      '多尔玛巴赫切宫 → 奥塔科伊｜沿海公交',
+      '从宫殿外沿Beşiktaş方向找到适合的沿海公交（需临行用İETT/地图核对站点），前往Ortaköy，保守预留约40–50分钟包含步行候车。公交可能拥堵，若晚到先保留15:50登船，减少餐饮与海边闲逛而非牺牲日落。',
+      'Ortakoy Mosque Istanbul'
+    ),
+    add(
+      '14:00–14:30',
+      '奥塔科伊午餐｜码头周边简餐',
+      '在奥塔科伊海滨广场用简餐（如当地烤土豆Kumpir或其他快餐）。尽量在14:30前吃完，避免排热门餐厅耽误清真寺与15:50轮渡。',
+      'Ortakoy Mosque Istanbul'
+    ),
+    {
+      ...mosqueOrtakoy19,
+      time: '14:30–15:05',
+      desc: '奥塔科伊清真寺位于博斯普鲁斯海峡边，适合拍清真寺、海面与海峡大桥同框。外景免费，若开放且不碰礼拜时间可短暂入内；女性带头巾。清真寺与码头紧邻，不必往返其他街区。最迟15:05转去岸边码头拍照。'
+    },
+    {
+      ...pier19,
+      time: '15:05–15:25',
+      desc: '在Ortaköy İskelesi旁的公共滨水广场拍清真寺与跨海峡大桥。码头和清真寺相邻，20分钟足以补拍外景。15:25之前结束拍照，前往Şehir Hatları正确登船口排队，别把其它运营商的游船码头当作公共轮渡。'
+    },
+    add(
+      '15:25–15:50｜提前排队',
+      'Ortaköy Şehir Hatları码头｜核对Üsküdar目的地',
+      '确认Şehir Hatları公共轮渡Ortaköy → Üsküdar → Kadıköy(Eski)的15:50工作日班次，只坐到第一站Üsküdar下船。时刻表为现行冬季安排，11月19日是周四；临行仍需核对当天是否有临时停航。',
+      'Ortakoy Iskelesi Istanbul'
+    ),
+    ferry19,
+    walkToSalacak19,
+    sunsetSalacak19,
+    return19
+  ];
+
   // Verify coverage and prevent accidental changes to the rest of the trip.
   for (const [date, snapshot] of unchanged) {
     if (JSON.stringify(byDate(date)) !== snapshot) {
