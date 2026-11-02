@@ -58,6 +58,8 @@ function applyItinerary(original) {
     'Galata Konak Cafe',
     'Galata Bridge Istanbul',
     'Karakoy Ferry Terminal Istanbul',
+    'Kadikoy Sehir Hatlari Iskelesi Istanbul',
+    'Eminonu Sehir Hatlari Iskelesi Istanbul',
     'Constantinopolis Hotel Istanbul'
   ];
   date14.items = [
@@ -97,16 +99,30 @@ function applyItinerary(original) {
       title: '加拉塔大桥｜金角湾夜景与旧城灯光',
       desc: '在桥上拍金角湾、清真寺轮廓与水面灯光，预留约25分钟。14日的夕阳和蓝调已经安排在Galata Konak Cafe，这里拍入夜后的桥景，不重复守一次日落。拍摄时留意钓鱼线、车流和行人。之后步行到Karaköy轮渡码头。'
     },
+
     {
       ...ferry14,
-      time: '19:25（备选19:45）–约21:00',
-      title: 'Karaköy ↔ Kadıköy｜公共轮渡夜景往返',
-      desc: '加拉塔大桥拍完后步行到Karaköy码头，提前找正确的Şehir Hatları登船口。按目前官方时刻表，Karaköy往Kadıköy有19:25（约19:55抵达）及19:45（约20:15抵达）班次；Kadıköy可考虑20:30返航、约20:55回Karaköy。两人可短暂看亚洲岸夜景，重点是公共轮渡上欣赏海峡灯光，不另排亚洲岸景点。船班与码头须临行再核。回Karaköy后乘T1往Sultanahmet返回酒店；晚餐按船班灵活安排。'
+      time: '19:25–19:55｜第一段坐船',
+      title: '第一段：Karaköy → Kadıköy｜欧洲岸到亚洲岸',
+      desc: '看完Galata Konak的蓝调、拍完加拉塔大桥后，步行至Karaköy Şehir Hatları公共轮渡码头。乘19:25的KADIKÖY–KARAKÖY–EMİNÖNÜ线路，方向为Kadıköy。全程约30分钟：19:25从Karaköy开船，19:35船会先停Eminönü（不要下船），19:55到Kadıköy（这里下船）。这是普通公共轮渡，不是需要单独预约的观光船；用Istanbulkart按当日票价刷卡。看夜景只需这一次上船，记住第一段只在Kadıköy下船。官方目前列有该时刻，冬季运营仍需临行确认。',
+      map: 'Karakoy Ferry Terminal Istanbul'
     },
     add(
-      '约21:00后｜按实际返程',
-      '晚餐 / 返回Sultanahmet酒店',
-      '夜间轮渡结束后在Karaköy附近用餐或直接乘T1回Sultanahmet，步行返回酒店。15日早上要去蓝色清真寺，晚上尽量早休息。',
+      '19:55–20:20｜留约25分钟',
+      'Kadıköy码头｜下船、找返程口',
+      '19:55下船后在Kadıköy码头区域短暂停留、拍几张亚洲岸夜景，随后找到Şehir Hatları往Eminönü的检票登船口。Kadıköy可能有多个运营商和码头，务必查看船的电子目的地Eminönü以及途经Karaköy的路线；约20:20开始准备排队，20:30返程。',
+      'Kadikoy Sehir Hatlari Iskelesi Istanbul'
+    ),
+    add(
+      '20:30–21:00｜第二段坐船',
+      '第二段：Kadıköy → Eminönü｜回到酒店附近的欧洲岸',
+      '从Kadıköy码头乘20:30的Şehir Hatları公共轮渡往Eminönü。这条船约20:55经过Karaköy（不要下船；当班次官方备注Karaköy不接新乘客），21:00最终抵达Eminönü，在这里下船。为什么不回Karaköy？因为Eminönü在旧城这一侧，距离Sultanahmet酒店更方便。两次登船是两段独立乘车，注意分别刷交通卡；若错过20:30船，不要默认之后每班船都开往Eminönü，需重新核对目的地。',
+      'Eminonu Sehir Hatlari Iskelesi Istanbul'
+    ),
+    add(
+      '约21:00–21:35｜回酒店',
+      'Eminönü下船 → T1电车 → Sultanahmet酒店',
+      '21:00从Eminönü下船，按步行标志找到T1 Eminönü站，坐开往Bağcılar方向的电车，在Sultanahmet站下车（经过Sirkeci和Gülhane，共约3站），再步行到Constantinopolis Hotel。可在Eminönü附近简餐，或直接回酒店休息。今天不是Karaköy原码头往返，而是Karaköy出发、Eminönü结束的轮渡环线，避免回头路。翌日上午08:30参观蓝色清真寺。',
       'Constantinopolis Hotel Istanbul'
     )
   ];
