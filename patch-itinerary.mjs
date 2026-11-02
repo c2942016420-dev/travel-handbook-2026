@@ -317,7 +317,7 @@ function applyItinerary(original) {
 
   const ferry19 = find('11/19', 'Ortaköy → Üsküdar');
   const walkToSalacak19 = find('11/19', 'Üsküdar码头 → Salacak');
-  const sunsetSalacak19 = find('11/19', 'Salacak海滨｜少女塔');
+  const sunsetSalacak19 = find('11/19', 'Salacak海滨｜少女塔 + 历史半岛');
   const return19 = find('11/19', 'Üsküdar晚餐');
   date19.route = [
     'Constantinopolis Hotel Istanbul',
