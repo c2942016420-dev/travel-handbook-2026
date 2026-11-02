@@ -103,7 +103,7 @@ function applyItinerary(original) {
     {
       ...ferry14,
       time: '19:25–19:55｜第一段坐船',
-      title: '第一段：Karaköy → Kadıköy｜欧洲岸到亚洲岸',
+      title: '第一段：Karaköy → Kadıköy｜公共轮渡·欧洲岸到亚洲岸',
       desc: '看完Galata Konak的蓝调、拍完加拉塔大桥后，步行至Karaköy Şehir Hatları公共轮渡码头。乘19:25的KADIKÖY–KARAKÖY–EMİNÖNÜ线路，方向为Kadıköy。全程约30分钟：19:25从Karaköy开船，19:35船会先停Eminönü（不要下船），19:55到Kadıköy（这里下船）。这是普通公共轮渡，不是需要单独预约的观光船；用Istanbulkart按当日票价刷卡。看夜景只需这一次上船，记住第一段只在Kadıköy下船。官方目前列有该时刻，冬季运营仍需临行确认。',
       map: 'Karakoy Ferry Terminal Istanbul'
     },
@@ -115,7 +115,7 @@ function applyItinerary(original) {
     ),
     add(
       '20:30–21:00｜第二段坐船',
-      '第二段：Kadıköy → Eminönü｜回到酒店附近的欧洲岸',
+      '第二段：Kadıköy → Eminönü｜公共轮渡·回到酒店附近的欧洲岸',
       '从Kadıköy码头乘20:30的Şehir Hatları公共轮渡往Eminönü。这条船约20:55经过Karaköy（不要下船；当班次官方备注Karaköy不接新乘客），21:00最终抵达Eminönü，在这里下船。为什么不回Karaköy？因为Eminönü在旧城这一侧，距离Sultanahmet酒店更方便。两次登船是两段独立乘车，注意分别刷交通卡；若错过20:30船，不要默认之后每班船都开往Eminönü，需重新核对目的地。',
       'Eminonu Sehir Hatlari Iskelesi Istanbul'
     ),
