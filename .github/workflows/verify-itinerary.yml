@@ -109,8 +109,8 @@ jobs:
           for attempt in 1 2 3 4 5; do
             echo "Cloudflare live verification attempt $attempt"
             if curl -fsSL --compressed --connect-timeout 10 --max-time 30 -H "Cache-Control: no-cache" "$SITE" -o /tmp/verity-travel-live.html; then
-              if grep -Fq 'Salacak海滨｜少女塔' /tmp/verity-travel-live.html && grep -Fq 'Ortaköy → Üsküdar' /tmp/verity-travel-live.html && grep -Fq 'Seven Hills → 圣索菲亚' /tmp/verity-travel-live.html && grep -Fq '轮渡查询｜其他班次、官方时刻表、Google Maps' /tmp/verity-travel-live.html && grep -Fq 'Kadıköy → Eminönü（直接回旧城）' /tmp/verity-travel-live.html; then
-                echo 'LIVE_CONFIRMED: Cloudflare HTML includes current Istanbul itinerary, full ferry guide, and Google Maps links.'
+              if grep -Fq 'Salacak海滨｜少女塔' /tmp/verity-travel-live.html && grep -Fq 'Ortaköy → Üsküdar' /tmp/verity-travel-live.html && grep -Fq 'Seven Hills → 圣索菲亚' /tmp/verity-travel-live.html && grep -Fq '轮渡查询｜其他班次、官方时刻表、Google Maps' /tmp/verity-travel-live.html && grep -Fq 'Kadıköy → Eminönü（直接回旧城）' /tmp/verity-travel-live.html && grep -Fq '11/15–11/16｜Ala Stone Hotel' /tmp/verity-travel-live.html && grep -Fq 'Ala Stone Hotel Goreme' /tmp/verity-travel-live.html && ! grep -Fq 'Angels City Cave' /tmp/verity-travel-live.html; then
+                echo 'LIVE_CONFIRMED: Cloudflare HTML includes Ala Stone Hotel, corrected Cappadocia route, Istanbul itinerary, ferry guide and Google Maps links.'
                 exit 0
               fi
               echo 'LIVE_NOT_UPDATED: response loaded, but revised itinerary not yet found.'
