@@ -7,3 +7,6 @@ printf '%s  %s\n' '81f341830e18cc6cd084edfefaa785c871137e602be87987843b9f19786aa
 
 # Apply verified Istanbul-only itinerary revisions after the original HTML checksum.
 node patch-itinerary.mjs
+
+# Update 15-16 Nov Cappadocia accommodation in Göreme and linked route data.
+node patch-cappadocia.mjs
