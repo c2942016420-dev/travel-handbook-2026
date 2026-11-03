@@ -5,6 +5,7 @@ on:
     paths:
       - 'build.sh'
       - 'patch-itinerary.mjs'
+      - 'patch-cappadocia.mjs'
       - '.source/**'
       - '.github/workflows/verify-itinerary.yml'
   workflow_dispatch:
@@ -54,6 +55,25 @@ jobs:
           console.log('15 Nov: '+d15.items.map(x=>x.time+' '+x.title).join(' | '));
           console.log('19 Nov: '+d19.items.map(x=>x.time+' '+x.title).join(' | '));
           console.log('PASS: 17-day itinerary, all revised Istanbul stops present.');
+          NODE
+      - name: Verify Cappadocia hotel, booking, and map update
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const html = fs.readFileSync('public/index.html', 'utf8');
+          const start = html.indexOf('const days = ') + 13;
+          const end = html.indexOf('\n];', start);
+          const days = JSON.parse(html.slice(start, end + 2));
+          const d15 = days.find(d => d.date === '11/15');
+          const d16 = days.find(d => d.date === '11/16');
+          if (d15?.route.at(-1) !== 'Ala Stone Hotel Goreme') throw Error('15 Nov endpoint wrong');
+          if (d16?.route[0] !== 'Ala Stone Hotel Goreme') throw Error('16 Nov origin wrong');
+          for (const term of ['11/15–11/16｜Ala Stone Hotel', 'Kapadokya Sokak No:15',
+            'Ala Stone Hotel Goreme', '11/16｜Mithra Cave Hotel', '11/17｜Sacred House']) {
+            if (!html.includes(term)) throw Error('Missing booking or map info: ' + term);
+          }
+          if (/Angels City|\bNar\b|纳尔/.test(html)) throw Error('Old Nar hotel remains');
+          console.log('PASS: 15-16 Nov hotel, route, map and luggage plans updated; later bookings unchanged.');
           NODE
       - name: Verify ferry timetable guide and inline JavaScript syntax
         run: |
