@@ -112,8 +112,10 @@ const oldPoint = /"Angels City Cave Hotel Cappadocia":\s*\[\s*38\.648,\s*34\.715
 if ([...html.matchAll(oldPoint)].length !== 1) throw new Error('Missing unique original Nar map point.');
 html = html.replace(oldPoint, '"Ala Stone Hotel Goreme": [38.650034, 34.831687, "Göreme：Ala Stone Hotel所在区域，酒店入口以实际导航为准"]');
 
-if (/\bAngels City\b|\bNar\b|纳尔/.test(html))
-  throw new Error('Old Nar hotel references remain after patch.');
+const stale = [...html.matchAll(/Angels City|\bNar\b|纳尔/g)]
+  .map(m => html.slice(Math.max(0, m.index - 60), Math.min(html.length, m.index + 135)));
+if (stale.length)
+  throw new Error('Old Nar references remain: ' + JSON.stringify(stale.slice(0, 12)));
 if (!html.includes('11/16｜Mithra Cave Hotel') || !html.includes('11/17｜Sacred House'))
   throw new Error('Later Cappadocia hotels unexpectedly missing.');
 writeFileSync(file, html, 'utf8');
