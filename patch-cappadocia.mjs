@@ -12,9 +12,12 @@ const address = 'İsalı Gaferli Avcılar Mahallesi, Kapadokya Sokak No:15, Gör
 
 function replaceOne(from, to, label) {
   const first = html.indexOf(from);
-  if (first < 0 || html.indexOf(from, first + from.length) !== -1)
-    throw new Error('Cannot uniquely replace ' + label);
-  html = html.slice(0, first) + to + html.slice(first + from.length);
+  const count = html.split(from).length - 1;
+  const expected = label === 'balloon photo budget' ? 2 : 1;
+  if (first < 0 || count !== expected)
+    throw new Error('Expected ' + expected + ' occurrence(s) for ' + label + '; found ' + count);
+  if (expected === 2) html = html.split(from).join(to);
+  else html = html.slice(0, first) + to + html.slice(first + from.length);
 }
 
 const start = html.indexOf('const days = ');
@@ -30,6 +33,7 @@ const day = date => {
 };
 const d15 = day('11/15');
 const d16 = day('11/16');
+d16.tag = '清晨追球 + 同镇换酒店 + 两家地毯店拍摄 + 日落夜景';
 const arrival = d15.items.find(i => i.title.includes('纳尔入住'));
 const flight = d15.items.find(i => i.title.includes('VF3270'));
 const chase = d16.items.find(i => i.title.includes('老爷车追热气球'));
@@ -97,7 +101,8 @@ const replacements = [
     'balloon photo budget'
   ],
   ["'Angels City Cave Hotel':'纳尔洞穴酒店｜Angels City Cave Hotel'", "'Ala Stone Hotel':'阿拉石头酒店｜Ala Stone Hotel'", 'map label short'],
-  ["'Angels City Cave Hotel Cappadocia':'纳尔洞穴酒店｜Angels City Cave Hotel'", "'Ala Stone Hotel Goreme':'阿拉石头酒店｜Ala Stone Hotel'", 'map label long']
+  ["'Angels City Cave Hotel Cappadocia':'纳尔洞穴酒店｜Angels City Cave Hotel'", "'Ala Stone Hotel Goreme':'阿拉石头酒店｜Ala Stone Hotel'", 'map label long'],
+  ['11/15–11/18 · Nar、Göreme、Ürgüp','11/15–11/18 · Göreme、Ürgüp','overview map label']
 ];
 for (const [from, to, label] of replacements) replaceOne(from, to, label);
 
