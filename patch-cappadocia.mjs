@@ -48,7 +48,7 @@ flight.desc = '21:10抵达内夫谢希尔NAV机场后前往Göreme的Ala Stone H
 arrival.title = '格雷梅入住｜Ala Stone Hotel · Balloon View Experience';
 arrival.time = '约22:15以后｜以实际出机场和接送时间为准';
 arrival.map = newHotel;
-arrival.desc = '11/15入住、11/16退房（1晚）。Ala Stone Hotel在Göreme镇，不在Nar。酒店地址：' + address +
+arrival.desc = '11/15入住、11/16退房（1晚）。Ala Stone Hotel位于Göreme镇内。酒店地址：' + address +
   '。落地NAV后按事先约好的车前往酒店，夜间入住需提前联系前台确认。11/16清晨追球从这里出发，之后换到同镇Mithra Cave Hotel。露台能否看到热气球取决于当天放飞及天气。';
 const chaseMarker = '11/16清晨在Nar办理退房';
 const chaseIndex = chase.desc.indexOf(chaseMarker);
@@ -61,7 +61,7 @@ chase.desc = chase.desc.slice(0, chaseIndex) +
 const timing = luggage.desc.indexOf('10:15左右出发去Ikman');
 if (timing < 0) throw new Error('Missing Ikman timing in luggage plan.');
 luggage.desc = '追球结束后在Göreme镇内转酒店：如行李寄存在Ala Stone，先回去取箱，再到Mithra寄存；如摄影接送商已同意带行李，则可直接送到Mithra。' +
-  '两个酒店都在Göreme，无需从Nar跨镇赶来。提前向Mithra确认早间寄存，不默认提前入住或供应早餐。早餐可问Ala Stone是否能打包，或在Göreme吃。' + luggage.desc.slice(timing);
+  '两个酒店都在Göreme，换酒店无需跨镇长途接送。提前向Mithra确认早间寄存，不默认提前入住或供应早餐。早餐可问Ala Stone是否能打包，或在Göreme吃。' + luggage.desc.slice(timing);
 
 html = html.slice(0, dataStart) + JSON.stringify(days, null, 2) + html.slice(stop + 2);
 
